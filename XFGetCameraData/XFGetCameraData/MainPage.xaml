@@ -10,13 +10,16 @@
 
     <StackLayout Spacing="0">
         <AbsoluteLayout HorizontalOptions="FillAndExpand" VerticalOptions="FillAndExpand">
-            <my:CameraPreview
+            <!--<my:CameraPreview
                 x:Name="CameraPreview"
                 AbsoluteLayout.LayoutBounds="0,0,1,1"
                 AbsoluteLayout.LayoutFlags="All"
                 Camera="Rear"
-                IsPreviewing="true" />
-            <!--<my:CameraPreview2 AbsoluteLayout.LayoutBounds="0,0,1,1" AbsoluteLayout.LayoutFlags="All" />-->
+                IsPreviewing="true" />-->
+            <my:CameraPreview2
+                x:Name="CameraPreview2"
+                AbsoluteLayout.LayoutBounds="0,0,1,1"
+                AbsoluteLayout.LayoutFlags="All" />
             <!--<Button Text="Camera" Clicked="Button_Clicked"/>-->
             <Label
                 AbsoluteLayout.LayoutBounds="0,0,AutoSize,AutoSize"

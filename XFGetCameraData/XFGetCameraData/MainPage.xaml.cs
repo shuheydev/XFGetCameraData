@@ -20,19 +20,26 @@ namespace XFGetCameraData
         {
             InitializeComponent();
 
-            this.Disappearing += (sender, e) => {
-                //画面が非表示の時はプレビューを止める
-                //this.CameraPreview.IsPreviewing = false;
-            };
+            CameraPreview2.PictureFinished += OnPictureFinished;
 
-            this.Appearing += async (sender, e) => {
+            //this.Disappearing += (sender, e) => {
+            //    //画面が非表示の時はプレビューを止める
+            //    //this.CameraPreview.IsPreviewing = false;
+            //};
 
-                if (await GetCameraPermission() != PermissionStatus.Granted)
-                    return;
+            //this.Appearing += async (sender, e) => {
 
-                //画面が表示されたらプレビューを開始する
-                //this.CameraPreview.IsPreviewing = true;
-            };
+            //    if (await GetCameraPermission() != PermissionStatus.Granted)
+            //        return;
+
+            //    //画面が表示されたらプレビューを開始する
+            //    //this.CameraPreview.IsPreviewing = true;
+            //};
+        }
+
+        private void OnPictureFinished()
+        {
+            throw new NotImplementedException();
         }
 
         async void Handle_Clicked(object sender, System.EventArgs e)

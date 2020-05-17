@@ -45,8 +45,13 @@ namespace XFGetCameraData.Droid.CustomRenderers
             if (e.NewElement != null && _camera != null)
             {
                 _currentElement = e.NewElement;
-                
             }
+        }
+
+        //アプリの非アクティブ化,復帰ができるようになった
+        protected override void Dispose(bool disposing)
+        {
+            base.Dispose(disposing);
         }
     }
 
@@ -65,6 +70,8 @@ namespace XFGetCameraData.Droid.CustomRenderers
         private CaptureRequest.Builder _previewBuilder;
         private CameraCaptureSession _previewSession;
         private CaptureRequest _previewRequest;
+        private HandlerThread _backgroundThread;
+        private Handler _backgroundHandler;
 
         public bool OpeningCamera { private get; set; }
 
@@ -76,28 +83,12 @@ namespace XFGetCameraData.Droid.CustomRenderers
             //予め用意しておいたレイアウトファイルを読み込む場合はこのようにする
             //この場合,Resource.LayoutにCameraLayout.xmlファイルを置いている.
             //中身はTextureViewのみ
-            //var inflater = LayoutInflater.FromContext(context);
-            //if (inflater == null)
-            //    return;
-            //var view = inflater.Inflate(Resource.Layout.CameraLayout, this);
-            //_cameraTexture = view.FindViewById<TextureView>(Resource.Id.cameraTexture);
-
-            //コードで作成する場合は以下のようにする
-            _linearLayout = new Android.Widget.LinearLayout(context);
-            _linearLayout.LayoutParameters = new ViewGroup.LayoutParams(
-                ViewGroup.LayoutParams.MatchParent,
-                ViewGroup.LayoutParams.MatchParent);
-            ((MainActivity)context).AddContentView(_linearLayout,
-                new ViewGroup.LayoutParams(
-                    ViewGroup.LayoutParams.WrapContent,
-                    ViewGroup.LayoutParams.WrapContent));
-            _cameraTexture = new TextureView(context);
-            _linearLayout.AddView(_cameraTexture, new ViewGroup.LayoutParams(
-                ViewGroup.LayoutParams.WrapContent,
-                ViewGroup.LayoutParams.WrapContent));
-            #endregion
-
-
+            var inflater = LayoutInflater.FromContext(context);
+            if (inflater == null)
+                return;
+            var view = inflater.Inflate(Resource.Layout.CameraLayout, this);
+            _cameraTexture = view.FindViewById<TextureView>(Resource.Id.cameraTexture);
+            #region リスナーの登録
             _cameraTexture.SurfaceTextureListener = this;
 
             //OpenCameraするときに必要となる
@@ -106,6 +97,33 @@ namespace XFGetCameraData.Droid.CustomRenderers
             _cameraStateListener = new CameraStateListener { Camera = this };
 
             //_cameraCaptureListener = new CameraCaptureStateListener(this);
+            #endregion
+
+            ////コードで作成する場合は以下のようにする
+            //_linearLayout = new LinearLayout(context);
+            //_linearLayout.LayoutParameters = new ViewGroup.LayoutParams(
+            //                                     ViewGroup.LayoutParams.MatchParent,
+            //                                     ViewGroup.LayoutParams.MatchParent);
+            //_linearLayout.SetBackgroundColor(Android.Graphics.Color.White);
+            //((MainActivity)context).AddContentView(_linearLayout,
+            //                                new ViewGroup.LayoutParams(
+            //                                    ViewGroup.LayoutParams.WrapContent,
+            //                                    ViewGroup.LayoutParams.WrapContent));
+            //_cameraTexture = new TextureView(context);
+            //#region リスナーの登録
+            //_cameraTexture.SurfaceTextureListener = this;
+
+            ////OpenCameraするときに必要となる
+            ////カメラの状態に応じて行われる処理が記述されている.
+            ////これをCameraManagerに渡す
+            //_cameraStateListener = new CameraStateListener { Camera = this };
+
+            ////_cameraCaptureListener = new CameraCaptureStateListener(this);
+            //#endregion
+
+            #endregion
+
+
         }
 
 
@@ -113,14 +131,23 @@ namespace XFGetCameraData.Droid.CustomRenderers
         {
             _viewsurface = surface;
 
+            StartBackgroundThread();
+
             OpenCamera();
+        }
+
+        private void StartBackgroundThread()
+        {
+            _backgroundThread = new HandlerThread("CameraBackground");//名前付きでスレッドを作成
+            _backgroundThread.Start();
+            _backgroundHandler = new Handler(_backgroundThread.Looper);
         }
 
         private void OpenCamera()
         {
             _cameraManager = (CameraManager)_context.GetSystemService(Context.CameraService);
 
-            _cameraManager.OpenCamera("0", _cameraStateListener, null);
+            _cameraManager.OpenCamera("0", _cameraStateListener, _backgroundHandler);
 
             // string[] cameraIds = _cameraManager.GetCameraIdList();
 
@@ -136,7 +163,24 @@ namespace XFGetCameraData.Droid.CustomRenderers
 
         public bool OnSurfaceTextureDestroyed(SurfaceTexture surface)
         {
+            StopBackgroundThread();
+
             return true;
+        }
+
+        private void StopBackgroundThread()
+        {
+            _backgroundThread.QuitSafely();
+            try
+            {
+                _backgroundThread.Join();
+                _backgroundThread = null;
+                _backgroundHandler = null;
+            }
+            catch (InterruptedException ex)
+            {
+                ex.PrintStackTrace();
+            }
         }
 
         public void OnSurfaceTextureSizeChanged(SurfaceTexture surface, int width, int height)
@@ -181,10 +225,14 @@ namespace XFGetCameraData.Droid.CustomRenderers
             if (CameraDevice == null)
                 return;
 
+            //オートフォーカスの設定
+            //https://qiita.com/ohwada/items/d33cd9c90abf3ec01f9e
             _previewBuilder.Set(CaptureRequest.ControlAfMode, (int)ControlAFMode.ContinuousPicture);
+            //_previewBuilder.Set(CaptureRequest.ControlAfTrigger, (int)ControlAFTrigger.Start);
 
             _previewRequest = _previewBuilder.Build();
-            _previewSession.SetRepeatingRequest(_previewRequest, null, null);
+            _previewSession.SetRepeatingRequest(_previewRequest, null, _backgroundHandler);
+  
         }
     }
 }
