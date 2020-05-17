@@ -31,7 +31,7 @@ namespace XFGetCameraData.Droid.CustomRenderers
             //変更した画像をプレビューに反映させたりする
 
             //次のバッファをセット
-            //camera.AddCallbackBuffer(Buff);
+            camera.AddCallbackBuffer(Buff);
         }
     }
 }

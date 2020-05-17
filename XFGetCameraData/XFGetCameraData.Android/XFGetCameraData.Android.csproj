@@ -64,6 +64,9 @@
   <ItemGroup>
     <Compile Include="CustomRenderers\CameraPreviewCallback.cs" />
     <Compile Include="CustomRenderers\CameraPreviewRenderer.cs" />
+    <Compile Include="CustomRenderers\CameraPreviewRenderer2.cs" />
+    <Compile Include="CustomRenderers\Listeners\CameraCaptureStateListener.cs" />
+    <Compile Include="CustomRenderers\Listeners\CameraStateListener.cs" />
     <Compile Include="MainActivity.cs" />
     <Compile Include="Resources\Resource.designer.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -100,6 +103,11 @@
       <Project>{B4E3A37F-9A4E-4715-A780-40BF4D96BD8D}</Project>
       <Name>XFGetCameraData</Name>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <AndroidResource Include="Resources\layout\CameraLayout.xml">
+      <SubType>Designer</SubType>
+    </AndroidResource>
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\Xamarin\Android\Xamarin.Android.CSharp.targets" />
 </Project>

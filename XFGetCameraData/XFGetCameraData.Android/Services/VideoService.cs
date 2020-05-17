@@ -62,7 +62,7 @@ namespace XFGetCameraData.Droid.Services
 
                 // 入力ソースの設定
                 _recorder.SetVideoSource(VideoSource.Surface);      // 録画の入力ソースを指定
-                _recorder.SetAudioSource(AudioSource.Mic);          // 音声の入力ソースを指定
+                //_recorder.SetAudioSource(AudioSource.Mic);          // 音声の入力ソースを指定
 
                 // ファイルフォーマットの設定
                 _recorder.SetOutputFormat(OutputFormat.ThreeGpp);    // ファイルフォーマットを指定
@@ -71,7 +71,7 @@ namespace XFGetCameraData.Droid.Services
                 //_recorder.SetVideoEncoder(VideoEncoder.Mpeg4Sp);             // ビデオエンコーダを指定
                 //_recorder.SetAudioEncoder(AudioEncoder.AmrNb);             // オーディオエンコーダを指定
                 _recorder.SetVideoEncoder(VideoEncoder.H264);             // ビデオエンコーダを指定
-                _recorder.SetAudioEncoder(AudioEncoder.Aac);             // オーディオエンコーダを指定
+                //_recorder.SetAudioEncoder(AudioEncoder.Aac);             // オーディオエンコーダを指定
 
                 // 各種設定
                 _recorder.SetOutputFile(saveFilePath);              // 動画の出力先となるファイルパスを指定
