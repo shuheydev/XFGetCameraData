@@ -65,6 +65,7 @@
     <Compile Include="CustomRenderers\CameraPreviewCallback.cs" />
     <Compile Include="CustomRenderers\CameraPreviewRenderer.cs" />
     <Compile Include="CustomRenderers\CameraPreviewRenderer2.cs" />
+    <Compile Include="CustomRenderers\Listeners\CameraCaptureListener.cs" />
     <Compile Include="CustomRenderers\Listeners\CameraCaptureStateListener.cs" />
     <Compile Include="CustomRenderers\Listeners\CameraStateListener.cs" />
     <Compile Include="MainActivity.cs" />

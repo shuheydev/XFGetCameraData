@@ -40,6 +40,7 @@ namespace XFGetCameraData.Droid.CustomRenderers
             base.OnElementChanged(e);
 
             _camera = new DroidCameraPreview2(this.Context);
+
             this.SetNativeControl(_camera);
 
             if (e.NewElement != null && _camera != null)
@@ -67,6 +68,7 @@ namespace XFGetCameraData.Droid.CustomRenderers
         private CameraManager _cameraManager;
         private string _cameraId;
         private CameraStateListener _cameraStateListener;
+        private readonly CameraCaptureListener _cameraCaptureListener;
         private CaptureRequest.Builder _previewBuilder;
         private CameraCaptureSession _previewSession;
         private CaptureRequest _previewRequest;
@@ -96,7 +98,7 @@ namespace XFGetCameraData.Droid.CustomRenderers
             //これをCameraManagerに渡す
             _cameraStateListener = new CameraStateListener { Camera = this };
 
-            //_cameraCaptureListener = new CameraCaptureStateListener(this);
+            _cameraCaptureListener = new CameraCaptureListener(this);
             #endregion
 
             ////コードで作成する場合は以下のようにする
@@ -231,8 +233,9 @@ namespace XFGetCameraData.Droid.CustomRenderers
             //_previewBuilder.Set(CaptureRequest.ControlAfTrigger, (int)ControlAFTrigger.Start);
 
             _previewRequest = _previewBuilder.Build();
-            _previewSession.SetRepeatingRequest(_previewRequest, null, _backgroundHandler);
-  
+            //_cameraCaptureListenerで1フレームごとのキャプチャに対する処理を行う
+            _previewSession.SetRepeatingRequest(_previewRequest, _cameraCaptureListener, _backgroundHandler);
+
         }
     }
 }
