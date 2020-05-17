@@ -30,6 +30,8 @@ namespace XFGetCameraData.Droid.CustomRenderers
         private DroidCameraPreview2 _camera;
         private CameraPreview2 _currentElement;
 
+        public long FrameNumber { get; private set; }
+
         public CameraPreviewRenderer2(Context context) : base(context)
         {
             this._context = context;
@@ -40,6 +42,7 @@ namespace XFGetCameraData.Droid.CustomRenderers
             base.OnElementChanged(e);
 
             _camera = new DroidCameraPreview2(this.Context);
+            _camera.CaptureCompleted += _camera_CaptureCompleted;
 
             this.SetNativeControl(_camera);
 
@@ -47,6 +50,13 @@ namespace XFGetCameraData.Droid.CustomRenderers
             {
                 _currentElement = e.NewElement;
             }
+        }
+
+        private void _camera_CaptureCompleted(object sender, EventArgs e)
+        {
+            var s = sender as DroidCameraPreview2;
+            this.FrameNumber = s.FrameNumber;
+            _currentElement.FrameNumber = s.FrameNumber;
         }
 
         //アプリの非アクティブ化,復帰ができるようになった
@@ -76,6 +86,7 @@ namespace XFGetCameraData.Droid.CustomRenderers
         private Handler _backgroundHandler;
 
         public bool OpeningCamera { private get; set; }
+        public long FrameNumber { get; private set; }
 
         public DroidCameraPreview2(Context context) : base(context)
         {
@@ -99,6 +110,7 @@ namespace XFGetCameraData.Droid.CustomRenderers
             _cameraStateListener = new CameraStateListener { Camera = this };
 
             _cameraCaptureListener = new CameraCaptureListener(this);
+            _cameraCaptureListener.CaptureCompleted += _cameraCaptureListener_CaptureCompleted;
             #endregion
 
             ////コードで作成する場合は以下のようにする
@@ -128,6 +140,18 @@ namespace XFGetCameraData.Droid.CustomRenderers
 
         }
 
+        public event EventHandler CaptureCompleted;
+        protected virtual void OnCaptureCompleted(EventArgs e)
+        {
+            CaptureCompleted?.Invoke(this, e);
+        }
+
+        private void _cameraCaptureListener_CaptureCompleted(object sender, EventArgs e)
+        {
+            var s = sender as CameraCaptureListener;
+            this.FrameNumber = s.FrameNumber;
+            OnCaptureCompleted(e);
+        }
 
         public void OnSurfaceTextureAvailable(SurfaceTexture surface, int width, int height)
         {
