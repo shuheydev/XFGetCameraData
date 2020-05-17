@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.Text;
 using Xamarin.Forms;
+using Xamarin.Forms.Internals;
 
 namespace XFGetCameraData.CustomRenderers
 {
@@ -29,6 +31,17 @@ namespace XFGetCameraData.CustomRenderers
         {
             get { return (long)GetValue(FrameNumberProperty); }
             set { SetValue(FrameNumberProperty, value); }
+        }
+
+        public static readonly BindableProperty FrameProperty = BindableProperty.Create(
+            propertyName: "Frame",
+            returnType: typeof(ImageSource),
+            declaringType: typeof(CameraPreview2),
+            defaultValue: null);
+        public ImageSource Frame
+        {
+            get { return (ImageSource)GetValue(FrameProperty); }
+            set { SetValue(FrameProperty, value); }
         }
 
         public Command CameraClick

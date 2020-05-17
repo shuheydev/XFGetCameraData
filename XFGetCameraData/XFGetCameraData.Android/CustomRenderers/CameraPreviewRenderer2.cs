@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Drawing;
+using System.IO;
 using System.Linq;
 using System.Text;
-
+using System.Threading.Tasks;
 using Android.App;
 using Android.Content;
 using Android.Graphics;
@@ -10,6 +12,7 @@ using Android.Hardware;
 using Android.Hardware.Camera2;
 using Android.OS;
 using Android.Runtime;
+using Android.Support.V7.Widget;
 using Android.Views;
 using Android.Widget;
 using Java.Lang;
@@ -31,6 +34,7 @@ namespace XFGetCameraData.Droid.CustomRenderers
         private CameraPreview2 _currentElement;
 
         public long FrameNumber { get; private set; }
+        public ImageSource Frame { get; private set; }
 
         public CameraPreviewRenderer2(Context context) : base(context)
         {
@@ -43,6 +47,7 @@ namespace XFGetCameraData.Droid.CustomRenderers
 
             _camera = new DroidCameraPreview2(this.Context);
             _camera.CaptureCompleted += _camera_CaptureCompleted;
+            _camera.TextureUpdated += _camera_TextureUpdated;
 
             this.SetNativeControl(_camera);
 
@@ -50,6 +55,23 @@ namespace XFGetCameraData.Droid.CustomRenderers
             {
                 _currentElement = e.NewElement;
             }
+        }
+
+        private async void _camera_TextureUpdated(object sender, EventArgs e)
+        {
+            var s = sender as DroidCameraPreview2;
+
+            byte[] bitmapData;
+            //pngのbyte[]に変換
+            using (var stream = new MemoryStream())
+            {
+                await s.Frame.CompressAsync(Android.Graphics.Bitmap.CompressFormat.Png, 0, stream);
+                bitmapData = stream.ToArray();
+            }
+
+            var imageSource = ImageSource.FromStream(() => new MemoryStream(bitmapData));
+            this.Frame = imageSource;
+            _currentElement.Frame = imageSource;
         }
 
         private void _camera_CaptureCompleted(object sender, EventArgs e)
@@ -87,6 +109,7 @@ namespace XFGetCameraData.Droid.CustomRenderers
 
         public bool OpeningCamera { private get; set; }
         public long FrameNumber { get; private set; }
+        public Android.Graphics.Bitmap Frame { get; private set; }
 
         public DroidCameraPreview2(Context context) : base(context)
         {
@@ -213,8 +236,24 @@ namespace XFGetCameraData.Droid.CustomRenderers
         {
         }
 
+        public event EventHandler TextureUpdated;
+        protected virtual void OnTextureUpdated(EventArgs e)
+        {
+            TextureUpdated?.Invoke(this, e);
+        }
         public void OnSurfaceTextureUpdated(SurfaceTexture surface)
         {
+            //イベントハンドラで
+            if (this.FrameNumber % 32 != 0)
+                return;
+
+            //Frame毎に更新される
+            //https://stackoverflow.com/questions/29413431/how-to-get-single-preview-frame-in-camera2-api-android-5-0
+            var frame = Android.Graphics.Bitmap.CreateBitmap(_cameraTexture.Width, _cameraTexture.Height, Android.Graphics.Bitmap.Config.Argb8888);
+            _cameraTexture.GetBitmap(frame);
+
+            this.Frame = frame;
+            OnTextureUpdated(EventArgs.Empty);
         }
 
         internal void StartPreview()

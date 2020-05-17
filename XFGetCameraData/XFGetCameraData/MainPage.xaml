@@ -27,7 +27,6 @@
                 BindingContext="{x:Reference CameraPreview2}"
                 Text="{Binding FrameNumber, StringFormat='FrameCount:{0:G}'}"
                 TextColor="#70FFFFFF" />
-
         </AbsoluteLayout>
         <StackLayout
             Margin="0"
@@ -36,12 +35,13 @@
             HeightRequest="48"
             Orientation="Horizontal"
             VerticalOptions="End">
-            <Button
+            <!--<Button
                 Clicked="Handle_Clicked"
                 HeightRequest="40"
                 HorizontalOptions="Center"
                 Text="Next"
-                VerticalOptions="CenterAndExpand" />
+                VerticalOptions="CenterAndExpand" />-->
+            <Image BindingContext="{x:Reference CameraPreview2}" Source="{Binding Frame}" />
         </StackLayout>
 
     </StackLayout>
