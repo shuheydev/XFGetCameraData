@@ -17,22 +17,30 @@ namespace XFGetCameraData.Droid.CustomRenderers.Listeners
     {
         private readonly CaptureRequest _previewRequest;
         private readonly Handler _backgroundHandler;
+        private CameraCaptureSession _cameraCaptureSession = null;
+        private CameraCaptureListener _cameraCaptureListener;
 
         public long FrameNumber { get; private set; }
 
-        public CameraCaptureStateListener(CaptureRequest previewRequest, Handler backgroundHandler)
+        public CameraCaptureStateListener(CaptureRequest previewRequest,
+                                          Handler backgroundHandler)
         {
             this._previewRequest = previewRequest;
             this._backgroundHandler = backgroundHandler;
         }
 
+        //Sessionの設定完了(準備完了).プレビュー表示を開始
         public override void OnConfigured(CameraCaptureSession session)
         {
+            this._cameraCaptureSession = session;
             //_cameraCaptureListenerで1フレームごとのキャプチャに対する処理を行う
             //それをリスナーとして埋め込む
-            var cameraCaptureListener = new CameraCaptureListener();
-            cameraCaptureListener.CaptureCompleted += CameraCaptureListener_CaptureCompleted;
-            session.SetRepeatingRequest(_previewRequest, cameraCaptureListener, _backgroundHandler);
+            this._cameraCaptureListener = new CameraCaptureListener();
+            this._cameraCaptureListener.CaptureCompleted += CameraCaptureListener_CaptureCompleted;
+            //カメラプレビューを開始(TextureViewにカメラの画像が表示され続ける
+            session.SetRepeatingRequest(_previewRequest,
+                                        _cameraCaptureListener,
+                                        _backgroundHandler);
         }
         public override void OnConfigureFailed(CameraCaptureSession session)
         {
@@ -51,6 +59,18 @@ namespace XFGetCameraData.Droid.CustomRenderers.Listeners
 
             this.FrameNumber = s.FrameNumber;
             OnCaptureCompleted(e);
+        }
+
+        internal void StopPreview()
+        {
+            this._cameraCaptureSession?.StopRepeating();
+        }
+
+        internal void RestartPreview()
+        {
+            this._cameraCaptureSession.SetRepeatingRequest(_previewRequest,
+                             _cameraCaptureListener,
+                             _backgroundHandler);
         }
     }
 }

@@ -20,6 +20,7 @@ namespace XFGetCameraData.Droid.CustomRenderers.Listeners
         private readonly Size _previewSize;
         private readonly Handler _backgroundHandler;
         private CameraDevice _camera;
+        private CameraCaptureStateListener _captureStateListener;
 
         public long FrameNumber { get; private set; }
 
@@ -47,9 +48,10 @@ namespace XFGetCameraData.Droid.CustomRenderers.Listeners
             previewBuilder.AddTarget(surface);
             var previewRequest = previewBuilder.Build();
 
-            var captureStateListener = new CameraCaptureStateListener(previewRequest, _backgroundHandler);
-            captureStateListener.CaptureCompleted += CaptureStateListener_CaptureCompleted;
-            camera.CreateCaptureSession(surfaces, captureStateListener, _backgroundHandler);
+            this._captureStateListener = new CameraCaptureStateListener(previewRequest, _backgroundHandler);
+            this._captureStateListener.CaptureCompleted += CaptureStateListener_CaptureCompleted;
+            //CameraCaptureSessionを生成
+            camera.CreateCaptureSession(surfaces, this._captureStateListener, _backgroundHandler);
         }
         public override void OnDisconnected(CameraDevice camera)
         {
@@ -81,6 +83,16 @@ namespace XFGetCameraData.Droid.CustomRenderers.Listeners
 
             this.FrameNumber = s.FrameNumber;
             OnCaptureCompleted(EventArgs.Empty);
+        }
+
+        internal void StopPreview()
+        {
+            this._captureStateListener?.StopPreview();
+        }
+
+        internal void RestartPreview()
+        {
+            this._captureStateListener?.RestartPreview();
         }
     }
 }

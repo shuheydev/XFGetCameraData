@@ -25,6 +25,7 @@ namespace XFGetCameraData.Droid.CustomRenderers.Listeners
         private HandlerThread _backgroundThread;
         private Handler _backgroundHandler;
         private TextureView _cameraTexture;
+        private CameraStateListener _cameraStateListener;
 
         public CameraSurfaceTextureListener(TextureView cameraTexture)
         {
@@ -90,10 +91,10 @@ namespace XFGetCameraData.Droid.CustomRenderers.Listeners
             Android.Hardware.Camera2.Params.StreamConfigurationMap scm = (Android.Hardware.Camera2.Params.StreamConfigurationMap)cameraCharacteristics.Get(CameraCharacteristics.ScalerStreamConfigurationMap);
             var previewSize = scm.GetOutputSizes((int)ImageFormatType.Jpeg)[0];
 
-            var cameraStateListener = new CameraStateListener(surface, previewSize, _backgroundHandler);
-            cameraStateListener.CaptureCompleted += CameraStateListener_CaptureCompleted;
+            this._cameraStateListener = new CameraStateListener(surface, previewSize, _backgroundHandler);
+            this._cameraStateListener.CaptureCompleted += CameraStateListener_CaptureCompleted;
 
-            _cameraManager.OpenCamera(cameraId, cameraStateListener, _backgroundHandler);
+            _cameraManager.OpenCamera(cameraId, this._cameraStateListener, _backgroundHandler);
         }
         private void StopCamera2()
         {
@@ -120,6 +121,16 @@ namespace XFGetCameraData.Droid.CustomRenderers.Listeners
 
             this.FrameNumber = s.FrameNumber;
             OnCaptureCompleted(EventArgs.Empty);
+        }
+
+        internal void RestartPreview()
+        {
+            this._cameraStateListener?.RestartPreview();
+        }
+
+        internal void StopPreview()
+        {
+            this._cameraStateListener?.StopPreview();
         }
     }
 }

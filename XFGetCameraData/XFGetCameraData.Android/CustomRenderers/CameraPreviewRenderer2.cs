@@ -113,6 +113,7 @@ namespace XFGetCameraData.Droid.CustomRenderers
     {
         private readonly Context _context;
         private readonly TextureView _cameraTexture;
+        private readonly CameraSurfaceTextureListener _surfaceTextureListener;
 
         public Android.Widget.LinearLayout _linearLayout { get; }
         public bool OpeningCamera { private get; set; }
@@ -128,13 +129,15 @@ namespace XFGetCameraData.Droid.CustomRenderers
             }
             set
             {
+                //Previewの停止,再開については
+                //https://bellsoft.jp/blog/system/detail_538
                 if (value)
                 {
-                    _cameraTexture.Visibility = ViewStates.Visible;
+                        this._surfaceTextureListener?.RestartPreview();
                 }
                 else
                 {
-                    _cameraTexture.Visibility = ViewStates.Invisible;
+                    this._surfaceTextureListener?.StopPreview();
                 }
                 _isPreviewing = value;
             }
@@ -155,13 +158,11 @@ namespace XFGetCameraData.Droid.CustomRenderers
             _cameraTexture = view.FindViewById<TextureView>(Resource.Id.cameraTexture);
 
             #region リスナーの登録
-            var surfaceTextureListener = new CameraSurfaceTextureListener(_cameraTexture);
-            surfaceTextureListener.CaptureCompleted += CameraSurfaceTextureListener_CaptureCompleted;
-            surfaceTextureListener.TextureUpdated += CameraSurfaceTextureListener_TextureUpdated;
-            _cameraTexture.SurfaceTextureListener = surfaceTextureListener;
+            this._surfaceTextureListener = new CameraSurfaceTextureListener(_cameraTexture);
+            this._surfaceTextureListener.CaptureCompleted += CameraSurfaceTextureListener_CaptureCompleted;
+            this._surfaceTextureListener.TextureUpdated += CameraSurfaceTextureListener_TextureUpdated;
+            _cameraTexture.SurfaceTextureListener = this._surfaceTextureListener;
             #endregion
-
-            _cameraTexture.Visibility = ViewStates.Invisible;
             #endregion
         }
 
