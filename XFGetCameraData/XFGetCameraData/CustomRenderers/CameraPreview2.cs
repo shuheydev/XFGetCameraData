@@ -10,6 +10,16 @@ namespace XFGetCameraData.CustomRenderers
     public class CameraPreview2 : View
     {
         Command cameraClick;
+        public static readonly BindableProperty IsPreviewingProperty = BindableProperty.Create(
+            propertyName:"IsPreviewing",
+            returnType:typeof(bool),
+            declaringType:typeof(CameraPreview2),
+            defaultValue:false);
+        public bool IsPreviewing
+        {
+            get { return (bool)GetValue(IsPreviewingProperty); }
+            set { SetValue(IsPreviewingProperty, value); }
+        }
 
         public static readonly BindableProperty CameraProperty = BindableProperty.Create(
             propertyName: "Camera",

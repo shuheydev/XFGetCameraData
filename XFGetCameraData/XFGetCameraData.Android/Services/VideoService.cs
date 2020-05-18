@@ -131,7 +131,7 @@ namespace XFGetCameraData.Droid.Services
         #endregion
     }
 
-    public class SurfaceTextureListener : Java.Lang.Object, TextureView.ISurfaceTextureListener
+    public class SurfaceTextureListener :Java.Lang.Object, TextureView.ISurfaceTextureListener
     {
         #region "TextureView"
 

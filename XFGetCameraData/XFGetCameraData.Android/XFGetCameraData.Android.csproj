@@ -68,6 +68,7 @@
     <Compile Include="CustomRenderers\Listeners\CameraCaptureListener.cs" />
     <Compile Include="CustomRenderers\Listeners\CameraCaptureStateListener.cs" />
     <Compile Include="CustomRenderers\Listeners\CameraStateListener.cs" />
+    <Compile Include="CustomRenderers\Listeners\CameraSurfaceTextureListener.cs" />
     <Compile Include="MainActivity.cs" />
     <Compile Include="Resources\Resource.designer.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
