@@ -14,6 +14,7 @@ using Android.Hardware.Camera2;
 using Android.OS;
 using Android.Runtime;
 using Android.Support.V7.Widget;
+using Android.Util;
 using Android.Views;
 using Android.Widget;
 using Java.Lang;
@@ -49,9 +50,6 @@ namespace XFGetCameraData.Droid.CustomRenderers
 
             _droidCameraPreview2 = new DroidCameraPreview2(this._context);
 
-            _droidCameraPreview2.CaptureCompleted += CaptureCompleted;
-            _droidCameraPreview2.TextureUpdated += TextureUpdated;
-
             this.SetNativeControl(_droidCameraPreview2);
 
             if (e.NewElement != null && _droidCameraPreview2 != null)
@@ -75,34 +73,6 @@ namespace XFGetCameraData.Droid.CustomRenderers
                 this.Control.IsPreviewing = this.Element.IsPreviewing;
         }
 
-        private async void TextureUpdated(object sender, EventArgs e)
-        {
-            var s = sender as DroidCameraPreview2;
-            if (s is null)
-                return;
-
-            byte[] bitmapData;
-            //pngのbyte[]に変換
-            using (var stream = new MemoryStream())
-            {
-                await s.Frame.CompressAsync(Android.Graphics.Bitmap.CompressFormat.Png, 0, stream);
-                bitmapData = stream.ToArray();
-            }
-
-            var imageSource = ImageSource.FromStream(() => new MemoryStream(bitmapData));
-            this.Frame = imageSource;
-            _formsCameraPreview2.Frame = imageSource;
-        }
-        private void CaptureCompleted(object sender, EventArgs e)
-        {
-            var s = sender as DroidCameraPreview2;
-            if (s is null)
-                return;
-
-            this.FrameNumber = s.FrameNumber;
-            _formsCameraPreview2.FrameNumber = s.FrameNumber;
-        }
-
         protected override void Dispose(bool disposing)
         {
             base.Dispose(disposing);
@@ -111,14 +81,47 @@ namespace XFGetCameraData.Droid.CustomRenderers
 
     public class DroidCameraPreview2 : FrameLayout
     {
+        private static readonly SparseIntArray ORIENTATIONS = new SparseIntArray();
+        public static readonly int REQUEST_CAMERA_PERMISSION = 1;
+        private static readonly string FRAGMENT_DIALOG = "dialog";
+
+        // Tag for the {@link Log}.
+        private static readonly string TAG = "Camera2BasicFragment";
+
+        // Camera state: Showing camera preview.
+        public const int STATE_PREVIEW = 0;
+
+        // Camera state: Waiting for the focus to be locked.
+        public const int STATE_WAITING_LOCK = 1;
+
+        // Camera state: Waiting for the exposure to be precapture state.
+        public const int STATE_WAITING_PRECAPTURE = 2;
+
+        //Camera state: Waiting for the exposure state to be something other than precapture.
+        public const int STATE_WAITING_NON_PRECAPTURE = 3;
+
+        // Camera state: Picture was taken.
+        public const int STATE_PICTURE_TAKEN = 4;
+
+        // Max preview width that is guaranteed by Camera2 API
+        private static readonly int MAX_PREVIEW_WIDTH = 1920;
+
+        // Max preview height that is guaranteed by Camera2 API
+        private static readonly int MAX_PREVIEW_HEIGHT = 1080;
+
         private readonly Context _context;
-        private readonly TextureView _cameraTexture;
+        public TextureView CameraTexture;
+
+        public CameraCaptureSessionListener CameraCaptureSessionListener { get; internal set; }
+
         private readonly CameraSurfaceTextureListener _surfaceTextureListener;
 
         public Android.Widget.LinearLayout _linearLayout { get; }
         public bool OpeningCamera { private get; set; }
-        public long FrameNumber { get; private set; }
-        public Android.Graphics.Bitmap Frame { get; private set; }
+        public long FrameNumber { get; internal set; }
+        public Android.Graphics.Bitmap Frame { get; internal set; }
+
+        public int CameraState = STATE_PREVIEW;
 
         private bool _isPreviewing;
         public bool IsPreviewing
@@ -133,15 +136,37 @@ namespace XFGetCameraData.Droid.CustomRenderers
                 //https://bellsoft.jp/blog/system/detail_538
                 if (value)
                 {
-                        this._surfaceTextureListener?.RestartPreview();
+                    RestartPreview();
                 }
                 else
                 {
-                    this._surfaceTextureListener?.StopPreview();
+                    StopPreview();
                 }
                 _isPreviewing = value;
             }
         }
+
+        private void StopPreview()
+        {
+            if (this.CaptureSession == null)
+                return;
+
+            this.CaptureSession.StopRepeating();
+        }
+
+        private void RestartPreview()
+        {
+            if (this.CaptureSession == null)
+                return;
+
+            this.CaptureSession.SetRepeatingRequest(this.PreviewRequest, this.CameraCaptureSessionListener, this.BackgroundHandler);
+        }
+
+        public CameraDevice CameraDevice { get; internal set; }
+        public SurfaceTexture SurfaceTexture { get; internal set; }
+        public CameraCaptureSession CaptureSession { get; internal set; }
+        public CaptureRequest PreviewRequest { get; internal set; }
+        public Handler BackgroundHandler { get; internal set; }
 
         public DroidCameraPreview2(Context context) : base(context)
         {
@@ -155,45 +180,93 @@ namespace XFGetCameraData.Droid.CustomRenderers
             if (inflater == null)
                 return;
             var view = inflater.Inflate(Resource.Layout.CameraLayout, this);
-            _cameraTexture = view.FindViewById<TextureView>(Resource.Id.cameraTexture);
+            CameraTexture = view.FindViewById<TextureView>(Resource.Id.cameraTexture);
+
+            //リスナーの作成
+            this.CameraCaptureSessionListener = new CameraCaptureSessionListener(this);
 
             #region リスナーの登録
-            this._surfaceTextureListener = new CameraSurfaceTextureListener(_cameraTexture);
-            this._surfaceTextureListener.CaptureCompleted += CameraSurfaceTextureListener_CaptureCompleted;
-            this._surfaceTextureListener.TextureUpdated += CameraSurfaceTextureListener_TextureUpdated;
-            _cameraTexture.SurfaceTextureListener = this._surfaceTextureListener;
+            this._surfaceTextureListener = new CameraSurfaceTextureListener(this);
+            //this._surfaceTextureListener.CaptureCompleted += CameraSurfaceTextureListener_CaptureCompleted;
+            //this._surfaceTextureListener.TextureUpdated += CameraSurfaceTextureListener_TextureUpdated;
+            CameraTexture.SurfaceTextureListener = this._surfaceTextureListener;
             #endregion
             #endregion
         }
 
-        public event EventHandler CaptureCompleted;
-        protected virtual void OnCaptureCompleted(EventArgs e)
-        {
-            CaptureCompleted?.Invoke(this, e);
-        }
-        private void CameraSurfaceTextureListener_CaptureCompleted(object sender, EventArgs e)
-        {
-            var s = sender as CameraSurfaceTextureListener;
-            if (s is null)
-                return;
+        private HandlerThread _backgroundThread;
 
-            this.FrameNumber = s.FrameNumber;
-            OnCaptureCompleted(e);
+        public Android.Util.Size PreviewSize;
+        private CameraDevice.StateCallback _cameraStateListener;
+        private string _cameraId;
+        public CaptureRequest.Builder PreviewRequestBuilder;
+        public const long GET_BITMAP_INTERVAL = 32;
+
+        private void StartBackgroundThread()
+        {
+            _backgroundThread = new HandlerThread("CameraBackground");//名前付きでスレッドを作成
+            _backgroundThread.Start();
+            this.BackgroundHandler = new Handler(_backgroundThread.Looper);
+        }
+        private void StopBackgroundThread()
+        {
+            _backgroundThread.QuitSafely();
+            try
+            {
+                _backgroundThread.Join();
+                _backgroundThread = null;
+                this.BackgroundHandler = null;
+            }
+            catch (InterruptedException ex)
+            {
+                ex.PrintStackTrace();
+            }
         }
 
-        public event EventHandler TextureUpdated;
-        protected virtual void OnTextureUpdated(EventArgs e)
+        internal void StartCamera(int width, int height)
         {
-            TextureUpdated?.Invoke(this, e);
-        }
-        private void CameraSurfaceTextureListener_TextureUpdated(object sender, EventArgs e)
-        {
-            var s = sender as CameraSurfaceTextureListener;
-            if (s is null)
-                return;
+            StartBackgroundThread();
 
-            this.Frame = s.Frame;
-            OnTextureUpdated(EventArgs.Empty);
+            var _cameraManager = (CameraManager)Android.App.Application.Context.GetSystemService(Context.CameraService);
+            this._cameraId = _cameraManager.GetCameraIdList().FirstOrDefault();
+            CameraCharacteristics cameraCharacteristics = _cameraManager.GetCameraCharacteristics(_cameraId);
+            Android.Hardware.Camera2.Params.StreamConfigurationMap scm = (Android.Hardware.Camera2.Params.StreamConfigurationMap)cameraCharacteristics.Get(CameraCharacteristics.ScalerStreamConfigurationMap);
+            this.PreviewSize = scm.GetOutputSizes((int)ImageFormatType.Jpeg)[0];
+
+            this._cameraStateListener = new CameraStateListener(this);
+            _cameraManager.OpenCamera(_cameraId, this._cameraStateListener, null);
+        }
+
+        private void StopCamera()
+        {
+            StopBackgroundThread();
+        }
+
+        internal void CreateCameraPreviewSession()
+        {
+            try
+            {
+                if (this.SurfaceTexture == null)
+                {
+                    throw new IllegalStateException("SurfaceTexture is null");
+                }
+
+                this.SurfaceTexture.SetDefaultBufferSize(PreviewSize.Width, PreviewSize.Height);
+
+                Surface surface = new Surface(this.SurfaceTexture);
+
+                this.PreviewRequestBuilder = this.CameraDevice.CreateCaptureRequest(CameraTemplate.Preview);
+                PreviewRequestBuilder.AddTarget(surface);
+
+                //CameraCaptureSessionを生成
+                List<Surface> surfaces = new List<Surface>();
+                surfaces.Add(surface);
+                this.CameraDevice.CreateCaptureSession(surfaces, new CameraCaptureStateListener(this), BackgroundHandler);
+            }
+            catch (CameraAccessException ex)
+            {
+                ex.PrintStackTrace();
+            }
         }
     }
 }

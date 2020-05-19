@@ -1,22 +1,20 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-
-using Android.App;
-using Android.Content;
-using Android.Hardware.Camera2;
-using Android.OS;
-using Android.Runtime;
-using Android.Views;
-using Android.Widget;
+﻿using Android.Hardware.Camera2;
+using Java.Lang;
+using System;
 
 namespace XFGetCameraData.Droid.CustomRenderers.Listeners
 {
     //カメラのフレーム毎に発生するイベントのリスナー
-    public class CameraCaptureListener : CameraCaptureSession.CaptureCallback
+    public class CameraCaptureSessionListener : CameraCaptureSession.CaptureCallback
     {
+        private readonly DroidCameraPreview2 _owner;
+
         public long FrameNumber { get; private set; }
+
+        public CameraCaptureSessionListener(DroidCameraPreview2 owner)
+        {
+            this._owner = owner;
+        }
 
         public override void OnCaptureStarted(CameraCaptureSession session, CaptureRequest request, long timestamp, long frameNumber)
         {
@@ -26,13 +24,73 @@ namespace XFGetCameraData.Droid.CustomRenderers.Listeners
         public override void OnCaptureCompleted(CameraCaptureSession session, CaptureRequest request, TotalCaptureResult result)
         {
             base.OnCaptureCompleted(session, request, result);
-            this.FrameNumber = result.FrameNumber;
 
-            OnCaptureCompleted(EventArgs.Empty);
+            Process(result);
+            //OnCaptureCompleted(EventArgs.Empty);
         }
         public override void OnCaptureProgressed(CameraCaptureSession session, CaptureRequest request, CaptureResult partialResult)
         {
             base.OnCaptureProgressed(session, request, partialResult);
+            Process(partialResult);
+        }
+
+        private void Process(CaptureResult result)
+        {
+            this._owner.FrameNumber = result.FrameNumber;
+
+            switch (this._owner.CameraState)
+            {
+                case DroidCameraPreview2.STATE_WAITING_LOCK:
+                    {
+                        Integer afState = (Integer)result.Get(CaptureResult.ControlAfState);
+                        if (afState == null)
+                        {
+                            this._owner.CameraState = DroidCameraPreview2.STATE_PICTURE_TAKEN; // avoids multiple picture callbacks
+                            //this._owner.CaptureStillPicture();
+                        }
+
+                        else if ((((int)ControlAFState.FocusedLocked) == afState.IntValue()) ||
+                                   (((int)ControlAFState.NotFocusedLocked) == afState.IntValue()))
+                        {
+                            // ControlAeState can be null on some devices
+                            Integer aeState = (Integer)result.Get(CaptureResult.ControlAeState);
+                            if (aeState == null ||
+                                    aeState.IntValue() == ((int)ControlAEState.Converged))
+                            {
+                                this._owner.CameraState = DroidCameraPreview2.STATE_PICTURE_TAKEN;
+                                //this._owner.CaptureStillPicture();
+                            }
+                            else
+                            {
+                                //this._owner.RunPrecaptureSequence();
+                            }
+                        }
+                        break;
+                    }
+                case DroidCameraPreview2.STATE_WAITING_PRECAPTURE:
+                    {
+                        // ControlAeState can be null on some devices
+                        Integer aeState = (Integer)result.Get(CaptureResult.ControlAeState);
+                        if (aeState == null ||
+                                aeState.IntValue() == ((int)ControlAEState.Precapture) ||
+                                aeState.IntValue() == ((int)ControlAEState.FlashRequired))
+                        {
+                            this._owner.CameraState = DroidCameraPreview2.STATE_WAITING_NON_PRECAPTURE;
+                        }
+                        break;
+                    }
+                case DroidCameraPreview2.STATE_WAITING_NON_PRECAPTURE:
+                    {
+                        // ControlAeState can be null on some devices
+                        Integer aeState = (Integer)result.Get(CaptureResult.ControlAeState);
+                        if (aeState == null || aeState.IntValue() != ((int)ControlAEState.Precapture))
+                        {
+                            this._owner.CameraState = DroidCameraPreview2.STATE_PICTURE_TAKEN;
+                            //this._owner.CaptureStillPicture();
+                        }
+                        break;
+                    }
+            }
         }
 
         public event EventHandler CaptureCompleted;
