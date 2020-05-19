@@ -30,11 +30,12 @@ namespace XFGetCameraData.Droid.CustomRenderers.Listeners
         public void OnSurfaceTextureAvailable(SurfaceTexture surfaceTexture, int width, int height)
         {
             this._owner.SurfaceTexture = surfaceTexture;
-            this._owner.StartCamera(width, height);
+
+            this._owner.StartCamera();
         }
         public bool OnSurfaceTextureDestroyed(SurfaceTexture surfaceTexture)
         {
-            //this._owner.StopCamera();
+            this._owner.StopCamera();
             return true;
         }
         public void OnSurfaceTextureSizeChanged(SurfaceTexture surface, int width, int height)

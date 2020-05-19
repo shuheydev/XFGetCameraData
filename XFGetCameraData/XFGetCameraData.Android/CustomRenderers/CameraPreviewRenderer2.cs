@@ -4,6 +4,7 @@ using System.ComponentModel;
 using System.Drawing;
 using System.IO;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 using Android.App;
@@ -50,6 +51,8 @@ namespace XFGetCameraData.Droid.CustomRenderers
 
             _droidCameraPreview2 = new DroidCameraPreview2(this._context);
 
+            _droidCameraPreview2.FrameNumberUpdated += _droidCameraPreview2_FrameNumberUpdated;
+
             this.SetNativeControl(_droidCameraPreview2);
 
             if (e.NewElement != null && _droidCameraPreview2 != null)
@@ -59,9 +62,17 @@ namespace XFGetCameraData.Droid.CustomRenderers
                 if (this.Element == null || this.Control == null)
                     return;
 
-                this.Control.IsPreviewing = this.Element.IsPreviewing;
+                //this.Control.IsPreviewing = this.Element.IsPreviewing;
             }
         }
+
+        private void _droidCameraPreview2_FrameNumberUpdated(object sender, EventArgs e)
+        {
+            var s = sender as DroidCameraPreview2;
+
+            _formsCameraPreview2.FrameNumber = s.FrameNumber;
+        }
+
         protected override void OnElementPropertyChanged(object sender, PropertyChangedEventArgs e)
         {
             base.OnElementPropertyChanged(sender, e);
@@ -118,7 +129,27 @@ namespace XFGetCameraData.Droid.CustomRenderers
 
         public Android.Widget.LinearLayout _linearLayout { get; }
         public bool OpeningCamera { private get; set; }
-        public long FrameNumber { get; internal set; }
+
+        private long _frameNumber;
+        public long FrameNumber {
+            get
+            {
+                return _frameNumber;
+            }
+            set
+            {
+                _frameNumber = value;
+                OnFrameNumberUpdated(EventArgs.Empty);
+            }
+        }
+
+        public event EventHandler FrameNumberUpdated;
+        protected virtual void OnFrameNumberUpdated(EventArgs e)
+        {
+            FrameNumberUpdated?.Invoke(this, e);
+        }
+
+
         public Android.Graphics.Bitmap Frame { get; internal set; }
 
         public int CameraState = STATE_PREVIEW;
@@ -132,34 +163,20 @@ namespace XFGetCameraData.Droid.CustomRenderers
             }
             set
             {
+                _isPreviewing = value;
+
                 //Previewの停止,再開については
                 //https://bellsoft.jp/blog/system/detail_538
                 if (value)
                 {
-                    RestartPreview();
+                    //RestartPreview();
+                    StartCamera();
                 }
                 else
                 {
                     StopPreview();
                 }
-                _isPreviewing = value;
             }
-        }
-
-        private void StopPreview()
-        {
-            if (this.CaptureSession == null)
-                return;
-
-            this.CaptureSession.StopRepeating();
-        }
-
-        private void RestartPreview()
-        {
-            if (this.CaptureSession == null)
-                return;
-
-            this.CaptureSession.SetRepeatingRequest(this.PreviewRequest, this.CameraCaptureSessionListener, this.BackgroundHandler);
         }
 
         public CameraDevice CameraDevice { get; internal set; }
@@ -202,6 +219,48 @@ namespace XFGetCameraData.Droid.CustomRenderers
         public CaptureRequest.Builder PreviewRequestBuilder;
         public const long GET_BITMAP_INTERVAL = 32;
 
+
+
+
+
+        internal void StartCamera()
+        {
+            if (!this.IsPreviewing)
+                return;
+
+            StartBackgroundThread();
+
+            var _cameraManager = (CameraManager)Android.App.Application.Context.GetSystemService(Context.CameraService);
+            this._cameraId = _cameraManager.GetCameraIdList().FirstOrDefault();
+            CameraCharacteristics cameraCharacteristics = _cameraManager.GetCameraCharacteristics(_cameraId);
+            Android.Hardware.Camera2.Params.StreamConfigurationMap scm = (Android.Hardware.Camera2.Params.StreamConfigurationMap)cameraCharacteristics.Get(CameraCharacteristics.ScalerStreamConfigurationMap);
+            this.PreviewSize = scm.GetOutputSizes((int)ImageFormatType.Jpeg)[0];
+
+            this._cameraStateListener = new CameraStateListener(this);
+            _cameraManager.OpenCamera(_cameraId, this._cameraStateListener, null);
+        }
+        internal void StopCamera()
+        {
+            StopBackgroundThread();
+            StopPreview();
+        }
+
+        private void StopPreview()
+        {
+            if (this.CaptureSession == null)
+                return;
+
+            this.CaptureSession.StopRepeating();
+        }
+
+        private void RestartPreview()
+        {
+            if (this.CaptureSession == null)
+                return;
+
+            this.CaptureSession.SetRepeatingRequest(this.PreviewRequest, this.CameraCaptureSessionListener, this.BackgroundHandler);
+        }
+
         private void StartBackgroundThread()
         {
             _backgroundThread = new HandlerThread("CameraBackground");//名前付きでスレッドを作成
@@ -221,25 +280,6 @@ namespace XFGetCameraData.Droid.CustomRenderers
             {
                 ex.PrintStackTrace();
             }
-        }
-
-        internal void StartCamera(int width, int height)
-        {
-            StartBackgroundThread();
-
-            var _cameraManager = (CameraManager)Android.App.Application.Context.GetSystemService(Context.CameraService);
-            this._cameraId = _cameraManager.GetCameraIdList().FirstOrDefault();
-            CameraCharacteristics cameraCharacteristics = _cameraManager.GetCameraCharacteristics(_cameraId);
-            Android.Hardware.Camera2.Params.StreamConfigurationMap scm = (Android.Hardware.Camera2.Params.StreamConfigurationMap)cameraCharacteristics.Get(CameraCharacteristics.ScalerStreamConfigurationMap);
-            this.PreviewSize = scm.GetOutputSizes((int)ImageFormatType.Jpeg)[0];
-
-            this._cameraStateListener = new CameraStateListener(this);
-            _cameraManager.OpenCamera(_cameraId, this._cameraStateListener, null);
-        }
-
-        private void StopCamera()
-        {
-            StopBackgroundThread();
         }
 
         internal void CreateCameraPreviewSession()
