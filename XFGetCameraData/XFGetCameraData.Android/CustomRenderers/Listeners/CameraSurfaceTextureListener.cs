@@ -55,7 +55,7 @@ namespace XFGetCameraData.Droid.CustomRenderers.Listeners
 
             //Frame毎に更新される
             //https://stackoverflow.com/questions/29413431/how-to-get-single-preview-frame-in-camera2-api-android-5-0
-            var frame = Android.Graphics.Bitmap.CreateBitmap(this._owner.PreviewSize.Width, this._owner.PreviewSize.Height, Android.Graphics.Bitmap.Config.Argb8888);
+            var frame = Android.Graphics.Bitmap.CreateBitmap(this._owner.CameraTexture.Width, this._owner.CameraTexture.Height, Android.Graphics.Bitmap.Config.Argb8888);//previewSizeは大きすぎる.カメラの解像度になる
             this._owner.CameraTexture.GetBitmap(frame);
 
             this._owner.Frame = frame;
