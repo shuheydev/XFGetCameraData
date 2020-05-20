@@ -20,7 +20,7 @@
                 x:Name="CameraPreview2"
                 AbsoluteLayout.LayoutBounds="0,0,480,640"
                 AbsoluteLayout.LayoutFlags="PositionProportional"
-                IsPreviewing="True" />
+                IsPreviewing="False" />
             <!--<Button Text="Camera" Clicked="Button_Clicked"/>-->
             <Button Clicked="Button_Clicked_1" Text="Camera On/Off" />
             <Label

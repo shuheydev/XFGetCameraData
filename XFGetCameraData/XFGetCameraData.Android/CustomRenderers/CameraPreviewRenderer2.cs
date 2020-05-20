@@ -52,6 +52,7 @@ namespace XFGetCameraData.Droid.CustomRenderers
             _droidCameraPreview2 = new DroidCameraPreview2(this._context);
 
             _droidCameraPreview2.FrameNumberUpdated += _droidCameraPreview2_FrameNumberUpdated;
+            _droidCameraPreview2.FrameUpdated += _droidCameraPreview2_FrameUpdated;
 
             this.SetNativeControl(_droidCameraPreview2);
 
@@ -61,9 +62,12 @@ namespace XFGetCameraData.Droid.CustomRenderers
 
                 if (this.Element == null || this.Control == null)
                     return;
-
-                //this.Control.IsPreviewing = this.Element.IsPreviewing;
             }
+        }
+
+        private void _droidCameraPreview2_FrameUpdated(object sender, EventArgs e)
+        {
+            
         }
 
         private void _droidCameraPreview2_FrameNumberUpdated(object sender, EventArgs e)
@@ -131,7 +135,8 @@ namespace XFGetCameraData.Droid.CustomRenderers
         public bool OpeningCamera { private get; set; }
 
         private long _frameNumber;
-        public long FrameNumber {
+        public long FrameNumber
+        {
             get
             {
                 return _frameNumber;
@@ -143,14 +148,30 @@ namespace XFGetCameraData.Droid.CustomRenderers
             }
         }
 
+
+        public event EventHandler FrameUpdated;
+        protected virtual void OnFrameUpdated(EventArgs e)
+        {
+            FrameUpdated?.Invoke(this, e);
+        }
+
         public event EventHandler FrameNumberUpdated;
         protected virtual void OnFrameNumberUpdated(EventArgs e)
         {
             FrameNumberUpdated?.Invoke(this, e);
         }
 
-
-        public Android.Graphics.Bitmap Frame { get; internal set; }
+        private Android.Graphics.Bitmap _frame;
+        public Android.Graphics.Bitmap Frame {
+            get {
+                return _frame;
+            }
+            set
+            {
+                _frame = value;
+                OnFrameNumberUpdated(EventArgs.Empty);
+            }
+        }
 
         public int CameraState = STATE_PREVIEW;
 

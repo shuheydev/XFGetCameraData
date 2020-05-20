@@ -22,21 +22,21 @@ namespace XFGetCameraData
 
             CameraPreview2.PictureFinished += OnPictureFinished;
 
-            this.Disappearing += (sender, e) =>
-            {
-                //画面が非表示の時はプレビューを止める
-                this.CameraPreview2.IsPreviewing = false;
-            };
+            //this.Disappearing += (sender, e) =>
+            //{
+            //    //画面が非表示の時はプレビューを止める
+            //    this.CameraPreview2.IsPreviewing = false;
+            //};
 
-            this.Appearing += async (sender, e) =>
-            {
+            //this.Appearing += async (sender, e) =>
+            //{
 
-                if (await GetCameraPermission() != PermissionStatus.Granted)
-                    return;
+            //    if (await GetCameraPermission() != PermissionStatus.Granted)
+            //        return;
 
-                //画面が表示されたらプレビューを開始する
-                this.CameraPreview2.IsPreviewing = true;
-            };
+            //    //画面が表示されたらプレビューを開始する
+            //    this.CameraPreview2.IsPreviewing = true;
+            //};
         }
 
         private void OnPictureFinished()
