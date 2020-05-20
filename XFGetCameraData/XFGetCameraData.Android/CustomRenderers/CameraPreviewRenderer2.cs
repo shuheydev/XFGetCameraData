@@ -65,18 +65,6 @@ namespace XFGetCameraData.Droid.CustomRenderers
             }
         }
 
-        private void _droidCameraPreview2_FrameUpdated(object sender, EventArgs e)
-        {
-            
-        }
-
-        private void _droidCameraPreview2_FrameNumberUpdated(object sender, EventArgs e)
-        {
-            var s = sender as DroidCameraPreview2;
-
-            _formsCameraPreview2.FrameNumber = s.FrameNumber;
-        }
-
         protected override void OnElementPropertyChanged(object sender, PropertyChangedEventArgs e)
         {
             base.OnElementPropertyChanged(sender, e);
@@ -91,6 +79,32 @@ namespace XFGetCameraData.Droid.CustomRenderers
         protected override void Dispose(bool disposing)
         {
             base.Dispose(disposing);
+        }
+
+        private async void _droidCameraPreview2_FrameUpdated(object sender, EventArgs e)
+        {
+            var s = sender as DroidCameraPreview2;
+            if (s is null)
+                return;
+
+            byte[] bitmapData;
+            //pngのbyte[]に変換
+            using (var stream = new MemoryStream())
+            {
+                await s.Frame.CompressAsync(Android.Graphics.Bitmap.CompressFormat.Png, 0, stream);
+                bitmapData = stream.ToArray();
+            }
+
+            var imageSource = ImageSource.FromStream(() => new MemoryStream(bitmapData));
+            this.Frame = imageSource;
+            _formsCameraPreview2.Frame = imageSource;
+        }
+
+        private void _droidCameraPreview2_FrameNumberUpdated(object sender, EventArgs e)
+        {
+            var s = sender as DroidCameraPreview2;
+
+            _formsCameraPreview2.FrameNumber = s.FrameNumber;
         }
     }
 
@@ -169,7 +183,7 @@ namespace XFGetCameraData.Droid.CustomRenderers
             set
             {
                 _frame = value;
-                OnFrameNumberUpdated(EventArgs.Empty);
+                OnFrameUpdated(EventArgs.Empty);
             }
         }
 
