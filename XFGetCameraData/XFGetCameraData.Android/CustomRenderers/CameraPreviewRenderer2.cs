@@ -98,6 +98,7 @@ namespace XFGetCameraData.Droid.CustomRenderers
             var imageSource = ImageSource.FromStream(() => new MemoryStream(bitmapData));
             this.Frame = imageSource;
             _formsCameraPreview2.Frame = imageSource;
+            _formsCameraPreview2.OnFrameUpdated(EventArgs.Empty);
         }
 
         private void _droidCameraPreview2_FrameNumberUpdated(object sender, EventArgs e)

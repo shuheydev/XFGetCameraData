@@ -1,10 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.Runtime.CompilerServices;
 using System.Text;
 using Xamarin.Forms;
 using Xamarin.Forms.Internals;
 
+[assembly:InternalsVisibleTo("XFGetCameraData.Droid")]
 namespace XFGetCameraData.CustomRenderers
 {
     public class CameraPreview2 : View
@@ -54,16 +56,22 @@ namespace XFGetCameraData.CustomRenderers
             set { SetValue(FrameProperty, value); }
         }
 
-        public Command CameraClick
+        public event EventHandler FrameUpdated;
+        public void OnFrameUpdated(EventArgs e)
         {
-            get { return cameraClick; }
-            set { cameraClick = value; }
+            FrameUpdated?.Invoke(this, e);
         }
 
-        public void PictureTaken()
-        {
-            PictureFinished?.Invoke();
-        }
+        //public Command CameraClick
+        //{
+        //    get { return cameraClick; }
+        //    set { cameraClick = value; }
+        //}
+
+        //public void PictureTaken()
+        //{
+        //    PictureFinished?.Invoke();
+        //}
 
         public event Action PictureFinished;
     }

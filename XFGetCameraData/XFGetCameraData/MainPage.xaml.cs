@@ -7,6 +7,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Xamarin.Essentials;
 using Xamarin.Forms;
+using XFGetCameraData.CustomRenderers;
 using XFGetCameraData.Services;
 
 namespace XFGetCameraData
@@ -37,6 +38,7 @@ namespace XFGetCameraData
             //    //画面が表示されたらプレビューを開始する
             //    this.CameraPreview2.IsPreviewing = true;
             //};
+            this.BindingContext = this;
         }
 
         private void OnPictureFinished()
@@ -85,6 +87,22 @@ namespace XFGetCameraData
         private void Button_Clicked_1(object sender, EventArgs e)
         {
             CameraPreview2.IsPreviewing = !CameraPreview2.IsPreviewing;
+        }
+
+        private ImageSource _frameImage;
+        public ImageSource FrameImage
+        {
+            get => _frameImage;
+            set
+            {
+                _frameImage = value;
+                OnPropertyChanged();
+            }
+        }
+        private void CameraPreview2_FrameUpdated(object sender, EventArgs e)
+        {
+            var s = sender as CameraPreview2;
+            FrameImage = s.Frame;
         }
     }
 }
