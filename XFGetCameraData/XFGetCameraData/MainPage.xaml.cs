@@ -21,7 +21,7 @@ namespace XFGetCameraData
         {
             InitializeComponent();
 
-            CameraPreview2.PictureFinished += OnPictureFinished;
+            //CameraPreview2.PictureFinished += OnPictureFinished;
 
             //this.Disappearing += (sender, e) =>
             //{
@@ -87,6 +87,11 @@ namespace XFGetCameraData
         private void Button_Clicked_1(object sender, EventArgs e)
         {
             CameraPreview2.IsPreviewing = !CameraPreview2.IsPreviewing;
+        }
+
+        private void Button_Clicked_2(object sender, EventArgs e)
+        {
+            CameraPreview2.Camera = CameraPreview2.Camera == CameraOption.Back ? CameraOption.Front : CameraOption.Back;
         }
 
         private ImageSource _frameImage;

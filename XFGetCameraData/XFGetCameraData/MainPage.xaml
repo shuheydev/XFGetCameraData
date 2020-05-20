@@ -20,10 +20,11 @@
                 x:Name="CameraPreview2"
                 AbsoluteLayout.LayoutBounds="0,0,480,640"
                 AbsoluteLayout.LayoutFlags="PositionProportional"
+                Camera="Back"
                 FrameUpdated="CameraPreview2_FrameUpdated"
                 IsPreviewing="False" />
             <!--<Button Text="Camera" Clicked="Button_Clicked"/>-->
-            <Button Clicked="Button_Clicked_1" Text="Camera On/Off" />
+
             <Label
                 AbsoluteLayout.LayoutBounds="0,0,AutoSize,AutoSize"
                 AbsoluteLayout.LayoutFlags="PositionProportional"
@@ -46,6 +47,8 @@
                 VerticalOptions="CenterAndExpand" />-->
             <!--<Image BindingContext="{x:Reference CameraPreview2}" Source="{Binding Frame}" />-->
             <Image x:Name="frameImage" Source="{Binding FrameImage}" />
+            <Button Clicked="Button_Clicked_1" Text="Preview On/Off" />
+            <Button Clicked="Button_Clicked_2" Text="Camera Back/Front" />
         </StackLayout>
 
     </StackLayout>

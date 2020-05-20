@@ -62,6 +62,10 @@ namespace XFGetCameraData.Droid.CustomRenderers
 
                 if (this.Element == null || this.Control == null)
                     return;
+
+                //プロパティの初期化はここで
+                this.Control.IsPreviewing = this.Element.IsPreviewing;
+                this.Control.CameraOption = this.Element.Camera;
             }
         }
 
@@ -74,6 +78,9 @@ namespace XFGetCameraData.Droid.CustomRenderers
 
             if (e.PropertyName == nameof(Element.IsPreviewing))
                 this.Control.IsPreviewing = this.Element.IsPreviewing;
+
+            if (e.PropertyName == nameof(Element.Camera))
+                this.Control.CameraOption = this.Element.Camera;
         }
 
         protected override void Dispose(bool disposing)
@@ -177,8 +184,10 @@ namespace XFGetCameraData.Droid.CustomRenderers
         }
 
         private Android.Graphics.Bitmap _frame;
-        public Android.Graphics.Bitmap Frame {
-            get {
+        public Android.Graphics.Bitmap Frame
+        {
+            get
+            {
                 return _frame;
             }
             set
@@ -205,7 +214,6 @@ namespace XFGetCameraData.Droid.CustomRenderers
                 //https://bellsoft.jp/blog/system/detail_538
                 if (value)
                 {
-                    //RestartPreview();
                     StartCamera();
                 }
                 else
@@ -214,6 +222,22 @@ namespace XFGetCameraData.Droid.CustomRenderers
                 }
             }
         }
+
+        private CameraOption _cameraOption;
+        public CameraOption CameraOption
+        {
+            get
+            {
+                return _cameraOption;
+            }
+            set
+            {
+                _cameraOption = value;
+
+                StartCamera();
+            }
+        }
+
 
         public CameraDevice CameraDevice { get; internal set; }
         public SurfaceTexture SurfaceTexture { get; internal set; }
@@ -253,6 +277,7 @@ namespace XFGetCameraData.Droid.CustomRenderers
         private CameraDevice.StateCallback _cameraStateListener;
         private string _cameraId;
         public CaptureRequest.Builder PreviewRequestBuilder;
+        private CameraManager _cameraManager;
         public const long GET_BITMAP_INTERVAL = 32;
 
 
@@ -266,9 +291,23 @@ namespace XFGetCameraData.Droid.CustomRenderers
 
             StartBackgroundThread();
 
-            var _cameraManager = (CameraManager)Android.App.Application.Context.GetSystemService(Context.CameraService);
-            this._cameraId = _cameraManager.GetCameraIdList().FirstOrDefault();
-            CameraCharacteristics cameraCharacteristics = _cameraManager.GetCameraCharacteristics(_cameraId);
+            this._cameraManager = (CameraManager)Android.App.Application.Context.GetSystemService(Context.CameraService);
+
+            var cameraIdList = this._cameraManager.GetCameraIdList();
+            CameraCharacteristics cameraCharacteristics = null;
+            //指定のカメラのidを取得する
+            this._cameraId = cameraIdList.FirstOrDefault(cId =>
+            {
+                cameraCharacteristics = _cameraManager.GetCameraCharacteristics(cId);
+                var lensFacing = (int)cameraCharacteristics.Get(CameraCharacteristics.LensFacing);
+                if (lensFacing == (int)this.CameraOption)
+                    return true;
+                return false;
+            });
+
+            //this._cameraId = cameraIdList[1];
+
+            //cameraCharacteristics = _cameraManager.GetCameraCharacteristics(_cameraId);
             Android.Hardware.Camera2.Params.StreamConfigurationMap scm = (Android.Hardware.Camera2.Params.StreamConfigurationMap)cameraCharacteristics.Get(CameraCharacteristics.ScalerStreamConfigurationMap);
             this.PreviewSize = scm.GetOutputSizes((int)ImageFormatType.Jpeg)[0];
 

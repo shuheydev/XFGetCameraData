@@ -6,17 +6,17 @@ using System.Text;
 using Xamarin.Forms;
 using Xamarin.Forms.Internals;
 
-[assembly:InternalsVisibleTo("XFGetCameraData.Droid")]
+[assembly: InternalsVisibleTo("XFGetCameraData.Droid")]
 namespace XFGetCameraData.CustomRenderers
 {
     public class CameraPreview2 : View
     {
         Command cameraClick;
         public static readonly BindableProperty IsPreviewingProperty = BindableProperty.Create(
-            propertyName:"IsPreviewing",
-            returnType:typeof(bool),
-            declaringType:typeof(CameraPreview2),
-            defaultValue:false);
+            propertyName: "IsPreviewing",
+            returnType: typeof(bool),
+            declaringType: typeof(CameraPreview2),
+            defaultValue: false);
         public bool IsPreviewing
         {
             get { return (bool)GetValue(IsPreviewingProperty); }
@@ -25,12 +25,12 @@ namespace XFGetCameraData.CustomRenderers
 
         public static readonly BindableProperty CameraProperty = BindableProperty.Create(
             propertyName: "Camera",
-            returnType: typeof(CameraOptions),
+            returnType: typeof(CameraOption),
             declaringType: typeof(CameraPreview2),
-            defaultValue: CameraOptions.Rear);
-        public CameraOptions Camera
+            defaultValue: CameraOption.Back);
+        public CameraOption Camera
         {
-            get { return (CameraOptions)GetValue(CameraProperty); }
+            get { return (CameraOption)GetValue(CameraProperty); }
             set { SetValue(CameraProperty, value); }
         }
 
@@ -56,6 +56,7 @@ namespace XFGetCameraData.CustomRenderers
             set { SetValue(FrameProperty, value); }
         }
 
+
         public event EventHandler FrameUpdated;
         public void OnFrameUpdated(EventArgs e)
         {
@@ -73,6 +74,12 @@ namespace XFGetCameraData.CustomRenderers
         //    PictureFinished?.Invoke();
         //}
 
-        public event Action PictureFinished;
+        //public event Action PictureFinished;
+    }
+
+    public enum CameraOption
+    {
+        Back = 1,
+        Front = 0,
     }
 }
