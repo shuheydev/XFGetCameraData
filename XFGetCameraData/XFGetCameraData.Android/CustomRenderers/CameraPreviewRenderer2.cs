@@ -22,11 +22,13 @@ using Android.Views;
 using Android.Widget;
 using Java.Lang;
 using Xamarin.Forms;
+using Xamarin.Forms.Internals;
 using Xamarin.Forms.Platform.Android;
 using XFGetCameraData.CustomRenderers;
 using XFGetCameraData.Droid.CustomRenderers;
 using XFGetCameraData.Droid.CustomRenderers.Listeners;
 using XFGetCameraData.Droid.Services;
+using XFGetCameraData.Droid.Utility;
 using static Android.Graphics.Bitmap;
 
 [assembly: ExportRenderer(typeof(CameraPreview2), typeof(CameraPreviewRenderer2))]
@@ -41,9 +43,8 @@ namespace XFGetCameraData.Droid.CustomRenderers
         private CameraPreview2 _formsCameraPreview2;
 
         public long FrameCount { get; private set; }
-
-
         public ImageSource ImageSource { get; private set; }
+        public byte[] JpegBytes { get; private set; }
 
         public CameraPreviewRenderer2(Context context) : base(context)
         {
@@ -87,68 +88,11 @@ namespace XFGetCameraData.Droid.CustomRenderers
             if (e.PropertyName == nameof(Element.Camera))
                 this.Control.CameraOption = this.Element.Camera;
         }
-
-
-
-        private int GetJpegOrientation(System.IO.Stream stream)
-        {
-            var exifIdx = FindExifMaker(stream);
-            if (exifIdx < 0)
-            {
-                return -1;
-            }
-
-            stream.Seek(exifIdx, SeekOrigin.Begin);
-
-            int n = 0;
-            byte[] buf = new byte[2];
-            while (true)
-            {
-                if (n + 2 > stream.Length)
-                    break;
-                stream.Seek(n, SeekOrigin.Begin);
-                stream.Read(buf, 0, 2);
-                if (buf[0] == 0x01 && buf[1] == 0x12)
-                {
-                    n += 2;
-                    stream.Seek(n, SeekOrigin.Begin);
-                    stream.Read(buf, 0, 2);
-                    return buf[0] * 256 + buf[1];
-                }
-                n++;
-                if (n > 2048)
-                    break;
-            }
-            return -1;
-        }
-
-        private int FindExifMaker(System.IO.Stream stream)
-        {
-            int n = 0;
-            byte[] buf = new byte[2];
-
-            while (true)
-            {
-                if (n + 2 > stream.Length)
-                    break;
-                stream.Seek(n, SeekOrigin.Begin);
-                stream.Read(buf, 0, 2);
-                if (buf[0] == 0xFF && buf[1] == 0xE1)
-                {
-                    return n;
-                }
-                n++;
-                if (n > 2048)
-                    break;
-            }
-            return -1;
-        }
-
-
         protected override void Dispose(bool disposing)
         {
             base.Dispose(disposing);
         }
+
 
         private async void _droidCameraPreview2_JpegBytesUpdated(object sender, EventArgs e)
         {
@@ -161,17 +105,28 @@ namespace XFGetCameraData.Droid.CustomRenderers
             //_formsCameraPreview2.Frame = imageSource;
             //_formsCameraPreview2.OnFrameUpdated(EventArgs.Empty);
 
+
+
+            //bytes[]→bitmap→
             using (var ms = new MemoryStream(s.JpegBytes))
             {
-                var d = FindExifMaker(ms);
-                var t = GetJpegOrientation(ms);
+                #region 画像回転
+                //Exifからjpegのカメラの向きを取得
+                var rotationType = ImageUtility.GetJpegOrientation(ms);
 
+                //GetJpegOrientationメソッド内で位置が進んでいるので,先頭に戻す
                 ms.Seek(0, SeekOrigin.Begin);
+                //Byte[]→AndroidのBitmapを生成
                 var bmp = await BitmapFactory.DecodeStreamAsync(ms);
+                //Matrixを使って回転させ
                 var matrix = new Matrix();
                 matrix.PostRotate(90);
+                //回転したBitmapを生成し直す
                 var rotated = Android.Graphics.Bitmap.CreateBitmap(bmp, 0, 0, bmp.Width, bmp.Height, matrix, true);
 
+                #endregion
+
+                //AndroidBitmap→byte[]
                 byte[] rotatedBytes;
                 using (var ms2 = new MemoryStream())
                 {
@@ -179,6 +134,11 @@ namespace XFGetCameraData.Droid.CustomRenderers
                     rotatedBytes = ms2.ToArray();
                 }
 
+                this.JpegBytes = rotatedBytes;
+                _formsCameraPreview2.JpegBytes = s.JpegBytes;
+                _formsCameraPreview2.OnJpegBytesUpdated(EventArgs.Empty);
+
+                //byte[] → ImageSource
                 var imgSource = ImageSource.FromStream(() => new MemoryStream(rotatedBytes));
                 this.ImageSource = ImageSource;
                 _formsCameraPreview2.ImageSource = imgSource;

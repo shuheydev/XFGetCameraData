@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.IO;
 using System.Runtime.CompilerServices;
 using System.Text;
 using Xamarin.Forms;
@@ -67,19 +68,33 @@ namespace XFGetCameraData.CustomRenderers
             set { SetValue(BitmapProperty, value); }
         }
 
-
-        public event EventHandler FrameUpdated;
-        public void OnImageSourceUpdated(EventArgs e)
+        public static readonly BindableProperty JpegBytesProperty = BindableProperty.Create(
+            propertyName: "JpegBytes",
+            returnType: typeof(byte[]),
+            declaringType: typeof(CameraPreview2),
+            defaultValue: null);
+        public byte[] JpegBytes
         {
-            FrameUpdated?.Invoke(this, e);
+            get { return (byte[])GetValue(JpegBytesProperty); }
+            set { SetValue(JpegBytesProperty, value); }
         }
 
+        public event EventHandler ImageSourceUpdated;
+        public void OnImageSourceUpdated(EventArgs e)
+        {
+            ImageSourceUpdated?.Invoke(this, e);
+        }
 
+        public event EventHandler JpegBytesUpdated;
+        public void OnJpegBytesUpdated(EventArgs e)
+        {
+            JpegBytesUpdated?.Invoke(this, e);
+        }
     }
 
     public enum CameraOption
     {
-        Back = 1,
         Front = 0,
+        Back = 1,
     }
 }

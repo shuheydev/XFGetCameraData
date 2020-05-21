@@ -22,7 +22,8 @@
                 AbsoluteLayout.LayoutBounds="0,0,480,640"
                 AbsoluteLayout.LayoutFlags="PositionProportional"
                 Camera="Back"
-                FrameUpdated="CameraPreview2_FrameUpdated"
+                ImageSourceUpdated="CameraPreview2_ImageSourceUpdated"
+                JpegBytesUpdated="CameraPreview2_JpegBytesUpdated"
                 IsPreviewing="true" />
             <!--<Button Text="Camera" Clicked="Button_Clicked"/>-->
 
@@ -37,7 +38,7 @@
                 x:Name="frameImage"
                 AbsoluteLayout.LayoutBounds="1,1,0.5,0.5"
                 AbsoluteLayout.LayoutFlags="All"
-                Source="{Binding FrameImage}" />
+                Source="{Binding FrameImageSource}" />
         </AbsoluteLayout>
         <StackLayout
             Margin="0"

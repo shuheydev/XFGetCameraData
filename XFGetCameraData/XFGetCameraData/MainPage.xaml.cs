@@ -78,13 +78,13 @@ namespace XFGetCameraData
             CameraPreview2.Camera = CameraPreview2.Camera == CameraOption.Back ? CameraOption.Front : CameraOption.Back;
         }
 
-        private ImageSource _frameImage;
-        public ImageSource FrameImage
+        private ImageSource _frameImageSource;
+        public ImageSource FrameImageSource
         {
-            get => _frameImage;
+            get => _frameImageSource;
             set
             {
-                _frameImage = value;
+                _frameImageSource = value;
                 OnPropertyChanged();
             }
         }
@@ -98,11 +98,29 @@ namespace XFGetCameraData
                 OnPropertyChanged();
             }
         }
-        private void CameraPreview2_FrameUpdated(object sender, EventArgs e)
+        private byte[] _frameJpegBytes;
+        public byte[] FrameJpegBytes
+        {
+            get => _frameJpegBytes;
+            set
+            {
+                _frameJpegBytes = value;
+                OnPropertyChanged();
+            }
+        }
+
+        private void CameraPreview2_ImageSourceUpdated(object sender, EventArgs e)
         {
             var s = sender as CameraPreview2;
-            FrameBitmap = s.Bitmap;
-            FrameImage = s.ImageSource;
+
+            FrameImageSource = s.ImageSource;
+        }
+
+        private void CameraPreview2_JpegBytesUpdated(object sender, EventArgs e)
+        {
+            var s = sender as CameraPreview2;
+
+            FrameJpegBytes = s.JpegBytes;
         }
     }
 }
