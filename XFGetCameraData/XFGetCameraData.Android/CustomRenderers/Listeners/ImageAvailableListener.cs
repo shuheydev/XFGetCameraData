@@ -30,8 +30,8 @@ namespace XFGetCameraData.Droid.CustomRenderers.Listeners
             //this._owner.BackgroundHandler.Post(new ImageSaver(reader.AcquireNextImage()));
             var image = reader.AcquireNextImage();
             ByteBuffer buffer = image.GetPlanes()[0].Buffer;
-            byte[] bytes = new byte[buffer.Remaining()];
-            buffer.Get(bytes);
+            byte[] jpegBytes = new byte[buffer.Remaining()];
+            buffer.Get(jpegBytes);
             image.Close();
 
             //acquireNextImageのあとでないと,次を取得せずに止まる.
@@ -39,14 +39,14 @@ namespace XFGetCameraData.Droid.CustomRenderers.Listeners
                 return;
 
             //Frameカウントを取得できていないとずっと動き続けてしまうので
-            if (this._owner.FrameNumber == 0)
+            if (this._owner.FrameCount == 0)
                 return;
 
             //指定したフレーム間隔でBitmapを取得する
-            if (this._owner.FrameNumber % DroidCameraPreview2.UPDATE_FRAME_SPAN != 0)
+            if (this._owner.FrameCount % DroidCameraPreview2.UPDATE_FRAME_SPAN != 0)
                 return;
 
-            this._owner.Image = bytes;
+            this._owner.JpegBytes = jpegBytes;
         }
     }
 

@@ -43,7 +43,7 @@ namespace XFGetCameraData.Droid.CustomRenderers.Listeners
        
         private void Process(CaptureResult result)
         {
-            this._owner.FrameNumber = result.FrameNumber;
+            this._owner.FrameCount = result.FrameNumber;
 
             switch (this._owner.CameraState)
             {

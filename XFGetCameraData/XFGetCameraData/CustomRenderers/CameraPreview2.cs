@@ -34,26 +34,26 @@ namespace XFGetCameraData.CustomRenderers
             set { SetValue(CameraProperty, value); }
         }
 
-        public static readonly BindableProperty FrameNumberProperty = BindableProperty.Create(
-            propertyName: "FrameNumber",
+        public static readonly BindableProperty FrameCountProperty = BindableProperty.Create(
+            propertyName: "FrameCount",
             returnType: typeof(long),
             declaringType: typeof(CameraPreview2),
             defaultValue: 0L);
-        public long FrameNumber
+        public long FrameCount
         {
-            get { return (long)GetValue(FrameNumberProperty); }
-            set { SetValue(FrameNumberProperty, value); }
+            get { return (long)GetValue(FrameCountProperty); }
+            set { SetValue(FrameCountProperty, value); }
         }
 
-        public static readonly BindableProperty FrameProperty = BindableProperty.Create(
-            propertyName: "Frame",
+        public static readonly BindableProperty ImageSourceProperty = BindableProperty.Create(
+            propertyName: "ImageSource",
             returnType: typeof(ImageSource),
             declaringType: typeof(CameraPreview2),
             defaultValue: null);
-        public ImageSource Frame
+        public ImageSource ImageSource
         {
-            get { return (ImageSource)GetValue(FrameProperty); }
-            set { SetValue(FrameProperty, value); }
+            get { return (ImageSource)GetValue(ImageSourceProperty); }
+            set { SetValue(ImageSourceProperty, value); }
         }
 
         public static readonly BindableProperty BitmapProperty = BindableProperty.Create(
@@ -69,7 +69,7 @@ namespace XFGetCameraData.CustomRenderers
 
 
         public event EventHandler FrameUpdated;
-        public void OnFrameUpdated(EventArgs e)
+        public void OnImageSourceUpdated(EventArgs e)
         {
             FrameUpdated?.Invoke(this, e);
         }

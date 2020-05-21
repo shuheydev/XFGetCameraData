@@ -40,8 +40,10 @@ namespace XFGetCameraData.Droid.CustomRenderers
         private DroidCameraPreview2 _droidCameraPreview2;
         private CameraPreview2 _formsCameraPreview2;
 
-        public long FrameNumber { get; private set; }
-        public ImageSource Frame { get; private set; }
+        public long FrameCount { get; private set; }
+
+
+        public ImageSource ImageSource { get; private set; }
 
         public CameraPreviewRenderer2(Context context) : base(context)
         {
@@ -54,9 +56,9 @@ namespace XFGetCameraData.Droid.CustomRenderers
 
             _droidCameraPreview2 = new DroidCameraPreview2(this._context);
 
-            _droidCameraPreview2.FrameNumberUpdated += _droidCameraPreview2_FrameNumberUpdated;
-            //_droidCameraPreview2.FrameUpdated += _droidCameraPreview2_FrameUpdated;
-            _droidCameraPreview2.ImageUpdated += _droidCameraPreview2_ImageUpdated;
+            _droidCameraPreview2.FrameCountUpdated += _droidCameraPreview2_FrameCountUpdated;
+            //_droidCameraPreview2.AndroidBitmapUpdated += _droidCameraPreview2_AndroidBitmapUpdated;
+            _droidCameraPreview2.JpegBytesUpdated += _droidCameraPreview2_JpegBytesUpdated;
 
             this.SetNativeControl(_droidCameraPreview2);
 
@@ -72,43 +74,21 @@ namespace XFGetCameraData.Droid.CustomRenderers
                 this.Control.CameraOption = this.Element.Camera;
             }
         }
-
-        private async void _droidCameraPreview2_ImageUpdated(object sender, EventArgs e)
+        protected override void OnElementPropertyChanged(object sender, PropertyChangedEventArgs e)
         {
-            var s = sender as DroidCameraPreview2;
-            if (s is null)
+            base.OnElementPropertyChanged(sender, e);
+
+            if (this.Element == null || this.Control == null)
                 return;
 
-            //s.Imageは画像が横のままなので,困る
-            //var imageSource = ImageSource.FromStream(() => new MemoryStream(s.Image));
-            //_formsCameraPreview2.Frame = imageSource;
-            //_formsCameraPreview2.OnFrameUpdated(EventArgs.Empty);
+            if (e.PropertyName == nameof(Element.IsPreviewing))
+                this.Control.IsPreviewing = this.Element.IsPreviewing;
 
-            //Bitmapに
-            using (var ms = new MemoryStream(s.Image))
-            {
-                var d = FindExifMaker(ms);
-                var t = GetJpegOrientation(ms);
-
-                ms.Seek(0, SeekOrigin.Begin);
-                var bmp = await BitmapFactory.DecodeStreamAsync(ms);
-                var matrix = new Matrix();
-                matrix.PostRotate(90);
-                var rotated = Android.Graphics.Bitmap.CreateBitmap(bmp, 0, 0, bmp.Width, bmp.Height, matrix, true);
-
-                byte[] rotatedBytes;
-                using (var ms2 = new MemoryStream())
-                {
-                    await rotated.CompressAsync(CompressFormat.Png, 0, ms2);
-                    rotatedBytes = ms2.ToArray();
-                }
-
-                var imgSource = ImageSource.FromStream(() => new MemoryStream(rotatedBytes));
-                _formsCameraPreview2.Frame = imgSource;
-
-                _formsCameraPreview2.OnFrameUpdated(EventArgs.Empty);
-            }
+            if (e.PropertyName == nameof(Element.Camera))
+                this.Control.CameraOption = this.Element.Camera;
         }
+
+
 
         private int GetJpegOrientation(System.IO.Stream stream)
         {
@@ -164,26 +144,48 @@ namespace XFGetCameraData.Droid.CustomRenderers
             return -1;
         }
 
-        protected override void OnElementPropertyChanged(object sender, PropertyChangedEventArgs e)
-        {
-            base.OnElementPropertyChanged(sender, e);
-
-            if (this.Element == null || this.Control == null)
-                return;
-
-            if (e.PropertyName == nameof(Element.IsPreviewing))
-                this.Control.IsPreviewing = this.Element.IsPreviewing;
-
-            if (e.PropertyName == nameof(Element.Camera))
-                this.Control.CameraOption = this.Element.Camera;
-        }
 
         protected override void Dispose(bool disposing)
         {
             base.Dispose(disposing);
         }
 
-        private async void _droidCameraPreview2_FrameUpdated(object sender, EventArgs e)
+        private async void _droidCameraPreview2_JpegBytesUpdated(object sender, EventArgs e)
+        {
+            var s = sender as DroidCameraPreview2;
+            if (s is null)
+                return;
+
+            //s.Imageは画像が横のままなので,困る
+            //var imageSource = ImageSource.FromStream(() => new MemoryStream(s.Image));
+            //_formsCameraPreview2.Frame = imageSource;
+            //_formsCameraPreview2.OnFrameUpdated(EventArgs.Empty);
+
+            using (var ms = new MemoryStream(s.JpegBytes))
+            {
+                var d = FindExifMaker(ms);
+                var t = GetJpegOrientation(ms);
+
+                ms.Seek(0, SeekOrigin.Begin);
+                var bmp = await BitmapFactory.DecodeStreamAsync(ms);
+                var matrix = new Matrix();
+                matrix.PostRotate(90);
+                var rotated = Android.Graphics.Bitmap.CreateBitmap(bmp, 0, 0, bmp.Width, bmp.Height, matrix, true);
+
+                byte[] rotatedBytes;
+                using (var ms2 = new MemoryStream())
+                {
+                    await rotated.CompressAsync(CompressFormat.Png, 0, ms2);
+                    rotatedBytes = ms2.ToArray();
+                }
+
+                var imgSource = ImageSource.FromStream(() => new MemoryStream(rotatedBytes));
+                this.ImageSource = ImageSource;
+                _formsCameraPreview2.ImageSource = imgSource;
+                _formsCameraPreview2.OnImageSourceUpdated(EventArgs.Empty);
+            }
+        }
+        private async void _droidCameraPreview2_AndroidBitmapUpdated(object sender, EventArgs e)
         {
             var s = sender as DroidCameraPreview2;
             if (s is null)
@@ -195,21 +197,20 @@ namespace XFGetCameraData.Droid.CustomRenderers
             //pngのbyte[]に変換
             using (var stream = new MemoryStream())
             {
-                await s.Frame.CompressAsync(Android.Graphics.Bitmap.CompressFormat.Png, 0, stream);
+                await s.AndroidBitmap.CompressAsync(Android.Graphics.Bitmap.CompressFormat.Png, 0, stream);
                 bitmapData = stream.ToArray();
             }
 
             var imageSource = ImageSource.FromStream(() => new MemoryStream(bitmapData));
-            this.Frame = imageSource;
-            _formsCameraPreview2.Frame = imageSource;
-            _formsCameraPreview2.OnFrameUpdated(EventArgs.Empty);
+            this.ImageSource = imageSource;
+            _formsCameraPreview2.ImageSource = imageSource;
+            _formsCameraPreview2.OnImageSourceUpdated(EventArgs.Empty);
         }
-
-        private void _droidCameraPreview2_FrameNumberUpdated(object sender, EventArgs e)
+        private void _droidCameraPreview2_FrameCountUpdated(object sender, EventArgs e)
         {
             var s = sender as DroidCameraPreview2;
 
-            _formsCameraPreview2.FrameNumber = s.FrameNumber;
+            _formsCameraPreview2.FrameCount = s.FrameCount;
         }
     }
 
@@ -249,52 +250,12 @@ namespace XFGetCameraData.Droid.CustomRenderers
         public CameraCaptureSessionListener CameraCaptureSessionListener { get; internal set; }
         public CameraCaptureStillPictureSessionListener CameraCaptureStillPictureSessionListener { get; }
         public ImageAvailableListener ImageAvailableListener { get; }
-
         private readonly CameraSurfaceTextureListener _surfaceTextureListener;
+        private CameraDevice.StateCallback _cameraStateListener;
+
 
         public Android.Widget.LinearLayout _linearLayout { get; }
         public bool OpeningCamera { private get; set; }
-
-        private long _frameNumber;
-        public long FrameNumber
-        {
-            get
-            {
-                return _frameNumber;
-            }
-            set
-            {
-                _frameNumber = value;
-                OnFrameNumberUpdated(EventArgs.Empty);
-            }
-        }
-
-
-        public event EventHandler FrameUpdated;
-        protected virtual void OnFrameUpdated(EventArgs e)
-        {
-            FrameUpdated?.Invoke(this, e);
-        }
-
-        public event EventHandler FrameNumberUpdated;
-        protected virtual void OnFrameNumberUpdated(EventArgs e)
-        {
-            FrameNumberUpdated?.Invoke(this, e);
-        }
-
-        private Android.Graphics.Bitmap _frame;
-        public Android.Graphics.Bitmap Frame
-        {
-            get
-            {
-                return _frame;
-            }
-            set
-            {
-                _frame = value;
-                OnFrameUpdated(EventArgs.Empty);
-            }
-        }
 
         public int CameraState = STATE_PREVIEW;
 
@@ -337,36 +298,87 @@ namespace XFGetCameraData.Droid.CustomRenderers
             }
         }
 
-        public CameraDevice CameraDevice { get; internal set; }
-        public SurfaceTexture SurfaceTexture { get; internal set; }
-        public CameraCaptureSession CaptureSession { get; internal set; }
-        public CaptureRequest PreviewRequest { get; internal set; }
-        public Handler BackgroundHandler { get; internal set; }
-        public ImageReader ImageReader { get; internal set; }
-        public CaptureRequest.Builder StillCaptureBuilder { get; private set; }
-
-
-        public event EventHandler ImageUpdated;
-        protected virtual void OnImageUpdated(EventArgs e)
-        {
-            ImageUpdated?.Invoke(this, e);
-        }
-        private byte[] _image;
-        public byte[] Image
+        private byte[] _jpegBytes;
+        public byte[] JpegBytes
         {
             get
             {
-                return _image;
+                return _jpegBytes;
             }
             internal set
             {
-                _image = value;
-                OnImageUpdated(EventArgs.Empty);
+                _jpegBytes = value;
+                OnJpegBytesUpdated(EventArgs.Empty);
+            }
+        }
+        private Android.Graphics.Bitmap _androidBitmap;
+        public Android.Graphics.Bitmap AndroidBitmap
+        {
+            get
+            {
+                return _androidBitmap;
+            }
+            set
+            {
+                _androidBitmap = value;
+                OnAndroidBitmapUpdated(EventArgs.Empty);
             }
         }
 
+        private long _frameCount;
+        public long FrameCount
+        {
+            get
+            {
+                return _frameCount;
+            }
+            set
+            {
+                _frameCount = value;
+                OnFrameCountUpdated(EventArgs.Empty);
+            }
+        }
+        public CameraDevice CameraDevice { get; internal set; }
+        public SurfaceTexture SurfaceTexture { get; internal set; }
+        public CameraCaptureSession CaptureSession { get; internal set; }
+        public ImageReader ImageReader { get; internal set; }
+
+
+        public event EventHandler JpegBytesUpdated;
+        protected virtual void OnJpegBytesUpdated(EventArgs e)
+        {
+            JpegBytesUpdated?.Invoke(this, e);
+        }
+        public event EventHandler AndroidBitmapUpdated;
+        protected virtual void OnAndroidBitmapUpdated(EventArgs e)
+        {
+            AndroidBitmapUpdated?.Invoke(this, e);
+        }
+        public event EventHandler FrameCountUpdated;
+        protected virtual void OnFrameCountUpdated(EventArgs e)
+        {
+            FrameCountUpdated?.Invoke(this, e);
+        }
+
+        public CaptureRequest.Builder PreviewRequestBuilder;
+        public CaptureRequest PreviewRequest { get; internal set; }
+        public CaptureRequest.Builder StillCaptureBuilder { get; private set; }
         public CaptureRequest StillCaptureRequest { get; internal set; }
+
+
         public int SensorOrientation { get; internal set; }
+
+        private HandlerThread _backgroundThread;
+        public Handler BackgroundHandler { get; internal set; }
+
+
+        public Android.Util.Size PreviewSize;
+
+        private string _cameraId;
+        private CameraManager _cameraManager;
+
+        public const long UPDATE_FRAME_SPAN = 4;//例:64フレーム毎にFrameやBitmapプロパティを更新する.
+
 
         public DroidCameraPreview2(Context context) : base(context)
         {
@@ -398,16 +410,6 @@ namespace XFGetCameraData.Droid.CustomRenderers
             #endregion
             #endregion
         }
-
-        private HandlerThread _backgroundThread;
-
-        public Android.Util.Size PreviewSize;
-        private CameraDevice.StateCallback _cameraStateListener;
-        private string _cameraId;
-        public CaptureRequest.Builder PreviewRequestBuilder;
-        private CameraManager _cameraManager;
-
-        public const long UPDATE_FRAME_SPAN = 4;//例:64フレーム毎にFrameやBitmapプロパティを更新する.
 
         internal void StartCamera()
         {
@@ -443,13 +445,6 @@ namespace XFGetCameraData.Droid.CustomRenderers
             this._cameraStateListener = new CameraStateListener(this);
             _cameraManager.OpenCamera(_cameraId, this._cameraStateListener, null);
         }
-
-        private void SetupImageReader()
-        {
-            this.ImageReader = ImageReader.NewInstance(480, 640, ImageFormatType.Jpeg, 1);
-            this.ImageReader.SetOnImageAvailableListener(this.ImageAvailableListener, this.BackgroundHandler);
-        }
-
         internal void StopCamera()
         {
             this.CaptureSession?.Close();
@@ -459,6 +454,12 @@ namespace XFGetCameraData.Droid.CustomRenderers
             this.CameraDevice = null;
 
             StopBackgroundThread();
+        }
+
+        private void SetupImageReader()
+        {
+            this.ImageReader = ImageReader.NewInstance(480, 640, ImageFormatType.Jpeg, 1);
+            this.ImageReader.SetOnImageAvailableListener(this.ImageAvailableListener, this.BackgroundHandler);
         }
 
         private void StartBackgroundThread()

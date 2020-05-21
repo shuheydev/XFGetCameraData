@@ -102,7 +102,7 @@ namespace XFGetCameraData
         {
             var s = sender as CameraPreview2;
             FrameBitmap = s.Bitmap;
-            FrameImage = s.Frame;
+            FrameImage = s.ImageSource;
         }
     }
 }

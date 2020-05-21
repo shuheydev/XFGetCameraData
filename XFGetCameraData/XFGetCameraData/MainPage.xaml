@@ -30,7 +30,7 @@
                 AbsoluteLayout.LayoutBounds="0,0,AutoSize,AutoSize"
                 AbsoluteLayout.LayoutFlags="PositionProportional"
                 BindingContext="{x:Reference CameraPreview2}"
-                Text="{Binding FrameNumber, StringFormat='FrameCount:{0:G}'}"
+                Text="{Binding FrameCount, StringFormat='FrameCount:{0:G}'}"
                 TextColor="#70FFFFFF" />
 
             <Image

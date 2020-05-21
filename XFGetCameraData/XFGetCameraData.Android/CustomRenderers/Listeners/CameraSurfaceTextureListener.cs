@@ -48,19 +48,19 @@ namespace XFGetCameraData.Droid.CustomRenderers.Listeners
                 return;
 
             //Frameカウントを取得できていないとずっと動き続けてしまうので
-            if (this._owner.FrameNumber == 0)
+            if (this._owner.FrameCount == 0)
                 return;
 
             //指定したフレーム間隔でBitmapを取得する
-            if (this._owner.FrameNumber % DroidCameraPreview2.UPDATE_FRAME_SPAN != 0)
+            if (this._owner.FrameCount % DroidCameraPreview2.UPDATE_FRAME_SPAN != 0)
                 return;
 
             //Frame毎に更新される
             //https://stackoverflow.com/questions/29413431/how-to-get-single-preview-frame-in-camera2-api-android-5-0
-            var frame = Android.Graphics.Bitmap.CreateBitmap(this._owner.CameraTexture.Width, this._owner.CameraTexture.Height, Android.Graphics.Bitmap.Config.Argb8888);//previewSizeは大きすぎる.カメラの解像度になる
-            this._owner.CameraTexture.GetBitmap(frame);
-
-            this._owner.Frame = frame;
+            var bitmap = Android.Graphics.Bitmap.CreateBitmap(this._owner.CameraTexture.Width, this._owner.CameraTexture.Height, Android.Graphics.Bitmap.Config.Argb8888);//previewSizeは大きすぎる.カメラの解像度になる
+            this._owner.CameraTexture.GetBitmap(bitmap);
+            
+            this._owner.AndroidBitmap = bitmap;
         }
     }
 }
