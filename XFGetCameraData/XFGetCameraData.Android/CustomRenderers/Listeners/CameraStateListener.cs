@@ -11,6 +11,7 @@ using Android.Runtime;
 using Android.Util;
 using Android.Views;
 using Android.Widget;
+using Xamarin.Forms.Internals;
 
 namespace XFGetCameraData.Droid.CustomRenderers.Listeners
 {
@@ -32,7 +33,7 @@ namespace XFGetCameraData.Droid.CustomRenderers.Listeners
         }
         public override void OnDisconnected(CameraDevice cameraDevice)
         {
-            cameraDevice.Close();
+            this._owner.CameraDevice.Close();
             this._owner.CameraDevice = null;
         }
         public override void OnError(CameraDevice cameraDevice, [GeneratedEnum] CameraError error)

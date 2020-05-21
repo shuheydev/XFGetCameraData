@@ -47,6 +47,11 @@ namespace XFGetCameraData.Droid.CustomRenderers.Listeners
                 this._owner.CaptureSession.SetRepeatingRequest(this._owner.PreviewRequest,
                                                                this._owner.CameraCaptureSessionListener,
                                                                this._owner.BackgroundHandler);
+
+                //Still撮影をする場合はこれを追加する.
+                //this._owner.CaptureSession.Capture(this._owner.PreviewRequest,
+                //                                               this._owner.CameraCaptureSessionListener,
+                //                                               this._owner.BackgroundHandler);
             }
             catch (CameraAccessException ex)
             {

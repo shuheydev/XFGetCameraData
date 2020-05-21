@@ -31,7 +31,8 @@ namespace XFGetCameraData.Droid.CustomRenderers.Listeners
         {
             this._owner.SurfaceTexture = surfaceTexture;
 
-            this._owner.StartCamera();
+            if (this._owner.IsPreviewing == true)
+                this._owner.StartCamera();
         }
         public bool OnSurfaceTextureDestroyed(SurfaceTexture surfaceTexture)
         {

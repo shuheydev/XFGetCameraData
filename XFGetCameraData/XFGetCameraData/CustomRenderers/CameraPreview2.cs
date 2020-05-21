@@ -63,18 +63,7 @@ namespace XFGetCameraData.CustomRenderers
             FrameUpdated?.Invoke(this, e);
         }
 
-        //public Command CameraClick
-        //{
-        //    get { return cameraClick; }
-        //    set { cameraClick = value; }
-        //}
-
-        //public void PictureTaken()
-        //{
-        //    PictureFinished?.Invoke();
-        //}
-
-        //public event Action PictureFinished;
+       
     }
 
     public enum CameraOption

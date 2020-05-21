@@ -218,7 +218,7 @@ namespace XFGetCameraData.Droid.CustomRenderers
                 }
                 else
                 {
-                    StopPreview();
+                    StopCamera();
                 }
             }
         }
@@ -237,7 +237,6 @@ namespace XFGetCameraData.Droid.CustomRenderers
                 StartCamera();
             }
         }
-
 
         public CameraDevice CameraDevice { get; internal set; }
         public SurfaceTexture SurfaceTexture { get; internal set; }
@@ -264,8 +263,6 @@ namespace XFGetCameraData.Droid.CustomRenderers
 
             #region リスナーの登録
             this._surfaceTextureListener = new CameraSurfaceTextureListener(this);
-            //this._surfaceTextureListener.CaptureCompleted += CameraSurfaceTextureListener_CaptureCompleted;
-            //this._surfaceTextureListener.TextureUpdated += CameraSurfaceTextureListener_TextureUpdated;
             CameraTexture.SurfaceTextureListener = this._surfaceTextureListener;
             #endregion
             #endregion
@@ -280,13 +277,10 @@ namespace XFGetCameraData.Droid.CustomRenderers
         private CameraManager _cameraManager;
         public const long GET_BITMAP_INTERVAL = 32;
 
-
-
-
-
         internal void StartCamera()
         {
-            if (!this.IsPreviewing)
+            //アプリ起動時に,表示領域が未作成の前にStartCameraが実行されることを防ぐ
+            if (this.SurfaceTexture == null)
                 return;
 
             StartBackgroundThread();
@@ -296,6 +290,8 @@ namespace XFGetCameraData.Droid.CustomRenderers
             var cameraIdList = this._cameraManager.GetCameraIdList();
             CameraCharacteristics cameraCharacteristics = null;
             //指定のカメラのidを取得する
+            //フロント,バックのカメラidの取得についてはこちらを参考
+            //https://bellsoft.jp/blog/system/detail_538
             this._cameraId = cameraIdList.FirstOrDefault(cId =>
             {
                 cameraCharacteristics = _cameraManager.GetCameraCharacteristics(cId);
@@ -304,10 +300,6 @@ namespace XFGetCameraData.Droid.CustomRenderers
                     return true;
                 return false;
             });
-
-            //this._cameraId = cameraIdList[1];
-
-            //cameraCharacteristics = _cameraManager.GetCameraCharacteristics(_cameraId);
             Android.Hardware.Camera2.Params.StreamConfigurationMap scm = (Android.Hardware.Camera2.Params.StreamConfigurationMap)cameraCharacteristics.Get(CameraCharacteristics.ScalerStreamConfigurationMap);
             this.PreviewSize = scm.GetOutputSizes((int)ImageFormatType.Jpeg)[0];
 
@@ -316,24 +308,13 @@ namespace XFGetCameraData.Droid.CustomRenderers
         }
         internal void StopCamera()
         {
+            this.CaptureSession?.Close();
+            this.CaptureSession = null;
+
+            this.CameraDevice?.Close();
+            this.CameraDevice = null;
+
             StopBackgroundThread();
-            StopPreview();
-        }
-
-        private void StopPreview()
-        {
-            if (this.CaptureSession == null)
-                return;
-
-            this.CaptureSession.StopRepeating();
-        }
-
-        private void RestartPreview()
-        {
-            if (this.CaptureSession == null)
-                return;
-
-            this.CaptureSession.SetRepeatingRequest(this.PreviewRequest, this.CameraCaptureSessionListener, this.BackgroundHandler);
         }
 
         private void StartBackgroundThread()
@@ -344,6 +325,9 @@ namespace XFGetCameraData.Droid.CustomRenderers
         }
         private void StopBackgroundThread()
         {
+            if (_backgroundThread == null)
+                return;
+
             _backgroundThread.QuitSafely();
             try
             {
