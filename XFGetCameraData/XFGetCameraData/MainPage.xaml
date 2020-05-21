@@ -23,8 +23,9 @@
                 AbsoluteLayout.LayoutFlags="PositionProportional"
                 Camera="Back"
                 ImageSourceUpdated="CameraPreview2_ImageSourceUpdated"
+                IsPreviewing="true"
                 JpegBytesUpdated="CameraPreview2_JpegBytesUpdated"
-                IsPreviewing="true" />
+                SensorOrientationUpdated="CameraPreview2_SensorOrientationUpdated" />
             <!--<Button Text="Camera" Clicked="Button_Clicked"/>-->
 
             <Label

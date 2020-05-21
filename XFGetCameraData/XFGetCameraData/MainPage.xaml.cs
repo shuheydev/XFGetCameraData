@@ -122,5 +122,12 @@ namespace XFGetCameraData
 
             FrameJpegBytes = s.JpegBytes;
         }
+
+        private void CameraPreview2_SensorOrientationUpdated(object sender, EventArgs e)
+        {
+            var s = sender as CameraPreview2;
+
+            
+        }
     }
 }

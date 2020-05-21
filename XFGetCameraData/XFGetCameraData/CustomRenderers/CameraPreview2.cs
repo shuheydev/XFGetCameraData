@@ -79,6 +79,17 @@ namespace XFGetCameraData.CustomRenderers
             set { SetValue(JpegBytesProperty, value); }
         }
 
+        public static readonly BindableProperty SensorOrientationProperty = BindableProperty.Create(
+            propertyName: "SensorOrientation",
+            returnType: typeof(int),
+            declaringType: typeof(CameraPreview2),
+            defaultValue: 0);
+        public int SensorOrientation
+        {
+            get { return (int)GetValue(SensorOrientationProperty); }
+            set { SetValue(SensorOrientationProperty, value); }
+        }
+
         public event EventHandler ImageSourceUpdated;
         public void OnImageSourceUpdated(EventArgs e)
         {
@@ -89,6 +100,12 @@ namespace XFGetCameraData.CustomRenderers
         public void OnJpegBytesUpdated(EventArgs e)
         {
             JpegBytesUpdated?.Invoke(this, e);
+        }
+
+        public event EventHandler SensorOrientationUpdated;
+        public void OnSensorOrientationUpdated(EventArgs e)
+        {
+            SensorOrientationUpdated?.Invoke(this,e);
         }
     }
 

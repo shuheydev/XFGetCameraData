@@ -45,6 +45,7 @@ namespace XFGetCameraData.Droid.CustomRenderers
         public long FrameCount { get; private set; }
         public ImageSource ImageSource { get; private set; }
         public byte[] JpegBytes { get; private set; }
+        public int SensorOrientation { get; private set; }
 
         public CameraPreviewRenderer2(Context context) : base(context)
         {
@@ -60,6 +61,7 @@ namespace XFGetCameraData.Droid.CustomRenderers
             _droidCameraPreview2.FrameCountUpdated += _droidCameraPreview2_FrameCountUpdated;
             //_droidCameraPreview2.AndroidBitmapUpdated += _droidCameraPreview2_AndroidBitmapUpdated;
             _droidCameraPreview2.JpegBytesUpdated += _droidCameraPreview2_JpegBytesUpdated;
+            _droidCameraPreview2.SensorOrientationUpdated += _droidCameraPreview2_SensorOrientationUpdated;
 
             this.SetNativeControl(_droidCameraPreview2);
 
@@ -75,6 +77,8 @@ namespace XFGetCameraData.Droid.CustomRenderers
                 this.Control.CameraOption = this.Element.Camera;
             }
         }
+
+
         protected override void OnElementPropertyChanged(object sender, PropertyChangedEventArgs e)
         {
             base.OnElementPropertyChanged(sender, e);
@@ -93,6 +97,17 @@ namespace XFGetCameraData.Droid.CustomRenderers
             base.Dispose(disposing);
         }
 
+
+        private void _droidCameraPreview2_SensorOrientationUpdated(object sender, EventArgs e)
+        {
+            var s = sender as DroidCameraPreview2;
+            if (s is null)
+                return;
+
+            this.SensorOrientation = s.SensorOrientation;
+            _formsCameraPreview2.SensorOrientation = s.SensorOrientation;
+            _formsCameraPreview2.OnSensorOrientationUpdated(EventArgs.Empty);
+        }
 
         private async void _droidCameraPreview2_JpegBytesUpdated(object sender, EventArgs e)
         {
@@ -120,7 +135,7 @@ namespace XFGetCameraData.Droid.CustomRenderers
                 var bmp = await BitmapFactory.DecodeStreamAsync(ms);
                 //Matrixを使って回転させ
                 var matrix = new Matrix();
-                matrix.PostRotate(90);
+                matrix.PostRotate(180 - this.SensorOrientation);
                 //回転したBitmapを生成し直す
                 var rotated = Android.Graphics.Bitmap.CreateBitmap(bmp, 0, 0, bmp.Width, bmp.Height, matrix, true);
 
@@ -170,6 +185,7 @@ namespace XFGetCameraData.Droid.CustomRenderers
         {
             var s = sender as DroidCameraPreview2;
 
+            this.FrameCount = s.FrameCount;
             _formsCameraPreview2.FrameCount = s.FrameCount;
         }
     }
@@ -319,14 +335,30 @@ namespace XFGetCameraData.Droid.CustomRenderers
         {
             FrameCountUpdated?.Invoke(this, e);
         }
+        public event EventHandler SensorOrientationUpdated;
+        protected virtual void OnSensorOrientationUpdated(EventArgs e)
+        {
+            SensorOrientationUpdated?.Invoke(this, e);
+        }
 
         public CaptureRequest.Builder PreviewRequestBuilder;
         public CaptureRequest PreviewRequest { get; internal set; }
         public CaptureRequest.Builder StillCaptureBuilder { get; private set; }
         public CaptureRequest StillCaptureRequest { get; internal set; }
 
-
-        public int SensorOrientation { get; internal set; }
+        private int _sensorOrientation;
+        public int SensorOrientation
+        {
+            get
+            {
+                return _sensorOrientation;
+            }
+            internal set
+            {
+                _sensorOrientation = value;
+                OnSensorOrientationUpdated(EventArgs.Empty);
+            }
+        }
 
         private HandlerThread _backgroundThread;
         public Handler BackgroundHandler { get; internal set; }
