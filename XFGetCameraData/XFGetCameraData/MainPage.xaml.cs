@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -87,9 +88,20 @@ namespace XFGetCameraData
                 OnPropertyChanged();
             }
         }
+        private Bitmap _frameBitmap;
+        public Bitmap FrameBitmap
+        {
+            get => _frameBitmap;
+            set
+            {
+                _frameBitmap = value;
+                OnPropertyChanged();
+            }
+        }
         private void CameraPreview2_FrameUpdated(object sender, EventArgs e)
         {
             var s = sender as CameraPreview2;
+            FrameBitmap = s.Bitmap;
             FrameImage = s.Frame;
         }
     }

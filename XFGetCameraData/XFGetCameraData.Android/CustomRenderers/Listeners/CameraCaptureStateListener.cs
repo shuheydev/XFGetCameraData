@@ -40,18 +40,17 @@ namespace XFGetCameraData.Droid.CustomRenderers.Listeners
                 //https://qiita.com/ohwada/items/d33cd9c90abf3ec01f9e
                 this._owner.PreviewRequestBuilder.Set(CaptureRequest.ControlAfMode,
                                                       (int)ControlAFMode.ContinuousPicture);
-                //_previewBuilder.Set(CaptureRequest.ControlAfTrigger, (int)ControlAFTrigger.Start);
+
+                //this._owner.StillCaptureBuilder.Set(CaptureRequest.ControlAfTrigger, (int)ControlAFTrigger.Start);
+                //this._owner.StillCaptureBuilder.Set(CaptureRequest.ControlAfMode, (int)ControlAFMode.ContinuousPicture);
+                //var orientation = (DroidCameraPreview2.ORIENTATIONS.Get(1) + this._owner.SensorOrientation + 270) % 360;
+                //this._owner.StillCaptureBuilder.Set(CaptureRequest.JpegOrientation, orientation);
 
                 //ここでやっとプレビューが表示される.
                 this._owner.PreviewRequest = this._owner.PreviewRequestBuilder.Build();
                 this._owner.CaptureSession.SetRepeatingRequest(this._owner.PreviewRequest,
                                                                this._owner.CameraCaptureSessionListener,
                                                                this._owner.BackgroundHandler);
-
-                //Still撮影をする場合はこれを追加する.
-                //this._owner.CaptureSession.Capture(this._owner.PreviewRequest,
-                //                                               this._owner.CameraCaptureSessionListener,
-                //                                               this._owner.BackgroundHandler);
             }
             catch (CameraAccessException ex)
             {
@@ -60,21 +59,6 @@ namespace XFGetCameraData.Droid.CustomRenderers.Listeners
         }
         public override void OnConfigureFailed(CameraCaptureSession session)
         {
-        }
-
-        public event EventHandler CaptureCompleted;
-        protected virtual void OnCaptureCompleted(EventArgs e)
-        {
-            CaptureCompleted?.Invoke(this, e);
-        }
-        private void CameraCaptureListener_CaptureCompleted(object sender, EventArgs e)
-        {
-            var s = sender as CameraCaptureSessionListener;
-            if (s is null)
-                return;
-
-            this.FrameNumber = s.FrameNumber;
-            OnCaptureCompleted(e);
         }
     }
 }

@@ -56,6 +56,17 @@ namespace XFGetCameraData.CustomRenderers
             set { SetValue(FrameProperty, value); }
         }
 
+        public static readonly BindableProperty BitmapProperty = BindableProperty.Create(
+            propertyName: "Bitmap",
+            returnType: typeof(Bitmap),
+            declaringType: typeof(CameraPreview2),
+            defaultValue: null);
+        public Bitmap Bitmap
+        {
+            get { return (Bitmap)GetValue(BitmapProperty); }
+            set { SetValue(BitmapProperty, value); }
+        }
+
 
         public event EventHandler FrameUpdated;
         public void OnFrameUpdated(EventArgs e)
@@ -63,7 +74,7 @@ namespace XFGetCameraData.CustomRenderers
             FrameUpdated?.Invoke(this, e);
         }
 
-       
+
     }
 
     public enum CameraOption

@@ -44,7 +44,7 @@ namespace XFGetCameraData.Droid.CustomRenderers.Listeners
         }
         public void OnSurfaceTextureUpdated(SurfaceTexture surface)
         {
-            if (DroidCameraPreview2.GET_BITMAP_INTERVAL == 0)
+            if (DroidCameraPreview2.UPDATE_FRAME_SPAN == 0)
                 return;
 
             //Frameカウントを取得できていないとずっと動き続けてしまうので
@@ -52,7 +52,7 @@ namespace XFGetCameraData.Droid.CustomRenderers.Listeners
                 return;
 
             //指定したフレーム間隔でBitmapを取得する
-            if (this._owner.FrameNumber % DroidCameraPreview2.GET_BITMAP_INTERVAL != 0)
+            if (this._owner.FrameNumber % DroidCameraPreview2.UPDATE_FRAME_SPAN != 0)
                 return;
 
             //Frame毎に更新される
@@ -61,7 +61,6 @@ namespace XFGetCameraData.Droid.CustomRenderers.Listeners
             this._owner.CameraTexture.GetBitmap(frame);
 
             this._owner.Frame = frame;
-            //OnTextureUpdated(EventArgs.Empty);
         }
     }
 }

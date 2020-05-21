@@ -27,13 +27,20 @@ namespace XFGetCameraData.Droid.CustomRenderers.Listeners
 
             Process(result);
             //OnCaptureCompleted(EventArgs.Empty);
+
+            ////Still撮影をする場合はこれを追加する.
+            ////Captureメソッド実行でキャプチャされる
+            //this._owner.StillCaptureRequest = this._owner.StillCaptureBuilder.Build();
+            //this._owner.CaptureSession.Capture(this._owner.StillCaptureRequest,
+            //                                   this._owner.CameraCaptureStillPictureSessionListener,
+            //                                   this._owner.BackgroundHandler);
         }
         public override void OnCaptureProgressed(CameraCaptureSession session, CaptureRequest request, CaptureResult partialResult)
         {
             base.OnCaptureProgressed(session, request, partialResult);
             Process(partialResult);
         }
-
+       
         private void Process(CaptureResult result)
         {
             this._owner.FrameNumber = result.FrameNumber;
