@@ -35,8 +35,9 @@ using static Android.Graphics.Bitmap;
 [assembly: ExportRenderer(typeof(CameraPreview2), typeof(CameraPreviewRenderer2))]
 namespace XFGetCameraData.Droid.CustomRenderers
 {
-    //これがカスタムレンダラー本体ね.
-    //
+    /// <summary>
+    /// 
+    /// </summary>
     public class CameraPreviewRenderer2 : ViewRenderer<CameraPreview2, DroidCameraPreview2>
     {
         private readonly Context _context;
