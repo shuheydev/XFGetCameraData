@@ -192,41 +192,42 @@ namespace XFGetCameraData.Droid.CustomRenderers
 
     public class DroidCameraPreview2 : FrameLayout
     {
-        public Android.Widget.LinearLayout _linearLayout { get; }
-        public bool OpeningCamera { private get; set; }
+        //public Android.Widget.LinearLayout _linearLayout { get; }
+        //public bool OpeningCamera { private get; set; }
 
-        public static readonly SparseIntArray ORIENTATIONS = new SparseIntArray();
-        public static readonly int REQUEST_CAMERA_PERMISSION = 1;
-        private static readonly string FRAGMENT_DIALOG = "dialog";
+        //public static readonly int REQUEST_CAMERA_PERMISSION = 1;
+        //private static readonly string FRAGMENT_DIALOG = "dialog";
 
-        // Tag for the {@link Log}.
-        private static readonly string TAG = "Camera2BasicFragment";
+        //// Tag for the {@link Log}.
+        //private static readonly string TAG = "Camera2BasicFragment";
 
-        // Camera state: Showing camera preview.
-        public const int STATE_PREVIEW = 0;
+        //// Camera state: Showing camera preview.
+        //public const int STATE_PREVIEW = 0;
 
-        // Camera state: Waiting for the focus to be locked.
-        public const int STATE_WAITING_LOCK = 1;
+        //// Camera state: Waiting for the focus to be locked.
+        //public const int STATE_WAITING_LOCK = 1;
 
-        // Camera state: Waiting for the exposure to be precapture state.
-        public const int STATE_WAITING_PRECAPTURE = 2;
+        //// Camera state: Waiting for the exposure to be precapture state.
+        //public const int STATE_WAITING_PRECAPTURE = 2;
 
-        //Camera state: Waiting for the exposure state to be something other than precapture.
-        public const int STATE_WAITING_NON_PRECAPTURE = 3;
+        ////Camera state: Waiting for the exposure state to be something other than precapture.
+        //public const int STATE_WAITING_NON_PRECAPTURE = 3;
 
-        // Camera state: Picture was taken.
-        public const int STATE_PICTURE_TAKEN = 4;
+        //// Camera state: Picture was taken.
+        //public const int STATE_PICTURE_TAKEN = 4;
+
+
+
+        //// Max preview width that is guaranteed by Camera2 API
+        //private static readonly int MAX_PREVIEW_WIDTH = 1920;
+
+        //// Max preview height that is guaranteed by Camera2 API
+        //private static readonly int MAX_PREVIEW_HEIGHT = 1080;
+
+        //public int CameraState = STATE_PREVIEW;
 
         public const long UPDATE_FRAME_SPAN = 4;//例:64フレーム毎にFrameやBitmapプロパティを更新する.
-
-
-        // Max preview width that is guaranteed by Camera2 API
-        private static readonly int MAX_PREVIEW_WIDTH = 1920;
-
-        // Max preview height that is guaranteed by Camera2 API
-        private static readonly int MAX_PREVIEW_HEIGHT = 1080;
-
-        public int CameraState = STATE_PREVIEW;
+        public static readonly SparseIntArray ORIENTATIONS = new SparseIntArray();
 
         #region Important
         private readonly Context _context;
