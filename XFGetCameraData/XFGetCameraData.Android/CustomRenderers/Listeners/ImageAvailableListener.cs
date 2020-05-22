@@ -27,8 +27,17 @@ namespace XFGetCameraData.Droid.CustomRenderers.Listeners
         public void OnImageAvailable(ImageReader reader)
         {
             this._owner.ImageReader = reader;
+
+            this.ProcessOnImageAvailable();
+        }
+
+        /// <summary>
+        /// OnImageAvailableから呼び出される
+        /// </summary>
+        private void ProcessOnImageAvailable()
+        {
             //this._owner.BackgroundHandler.Post(new ImageSaver(reader.AcquireNextImage()));
-            var image = reader.AcquireNextImage();
+            var image = this._owner.ImageReader.AcquireNextImage();
             ByteBuffer buffer = image.GetPlanes()[0].Buffer;
             byte[] jpegBytes = new byte[buffer.Remaining()];
             buffer.Get(jpegBytes);

@@ -34,6 +34,18 @@ namespace XFGetCameraData.Droid.CustomRenderers.Listeners
 
             this._owner.CaptureSession = session;
 
+            this.ProcessOnConfigured();
+        }
+        public override void OnConfigureFailed(CameraCaptureSession session)
+        {
+        }
+
+
+        /// <summary>
+        /// CameraCaptureStateListenerのOnConfiguredから呼び出される
+        /// </summary>
+        private void ProcessOnConfigured()
+        {
             try
             {
                 //オートフォーカスの設定
@@ -56,9 +68,6 @@ namespace XFGetCameraData.Droid.CustomRenderers.Listeners
             {
                 ex.PrintStackTrace();
             }
-        }
-        public override void OnConfigureFailed(CameraCaptureSession session)
-        {
         }
     }
 }

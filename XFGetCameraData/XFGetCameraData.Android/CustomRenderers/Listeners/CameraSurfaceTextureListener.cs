@@ -44,6 +44,16 @@ namespace XFGetCameraData.Droid.CustomRenderers.Listeners
         }
         public void OnSurfaceTextureUpdated(SurfaceTexture surface)
         {
+            this._owner.SurfaceTexture = surface;
+
+            this.ProcessOnSurfaceTextureUpdate();
+        }
+
+        /// <summary>
+        /// CameraSurfaceTextureListenerのOnSurfaceTextureUpdatedから呼び出される
+        /// </summary>
+        private void ProcessOnSurfaceTextureUpdate()
+        {
             if (DroidCameraPreview2.UPDATE_FRAME_SPAN == 0)
                 return;
 
@@ -59,7 +69,7 @@ namespace XFGetCameraData.Droid.CustomRenderers.Listeners
             //https://stackoverflow.com/questions/29413431/how-to-get-single-preview-frame-in-camera2-api-android-5-0
             var bitmap = Android.Graphics.Bitmap.CreateBitmap(this._owner.CameraTexture.Width, this._owner.CameraTexture.Height, Android.Graphics.Bitmap.Config.Argb8888);//previewSizeは大きすぎる.カメラの解像度になる
             this._owner.CameraTexture.GetBitmap(bitmap);
-            
+
             this._owner.AndroidBitmap = bitmap;
         }
     }

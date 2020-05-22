@@ -41,22 +41,5 @@ namespace XFGetCameraData.Droid.CustomRenderers.Listeners
             cameraDevice.Close();
             this._owner.CameraDevice = null;
         }
-
-        public event EventHandler CaptureCompleted;
-        protected virtual void OnCaptureCompleted(EventArgs e)
-        {
-            CaptureCompleted?.Invoke(this, e);
-        }
-        private void CaptureStateListener_CaptureCompleted(object sender, EventArgs e)
-        {
-            var s = sender as CameraCaptureStateListener;
-            if (s is null)
-                return;
-
-            this.FrameNumber = s.FrameNumber;
-            OnCaptureCompleted(EventArgs.Empty);
-        }
-
-
     }
 }

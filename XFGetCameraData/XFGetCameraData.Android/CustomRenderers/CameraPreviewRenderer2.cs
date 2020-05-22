@@ -21,6 +21,7 @@ using Android.Util;
 using Android.Views;
 using Android.Widget;
 using Java.Lang;
+using Java.Nio;
 using Xamarin.Forms;
 using Xamarin.Forms.Internals;
 using Xamarin.Forms.Platform.Android;
@@ -77,8 +78,6 @@ namespace XFGetCameraData.Droid.CustomRenderers
                 this.Control.CameraOption = this.Element.Camera;
             }
         }
-
-
         protected override void OnElementPropertyChanged(object sender, PropertyChangedEventArgs e)
         {
             base.OnElementPropertyChanged(sender, e);
@@ -97,7 +96,7 @@ namespace XFGetCameraData.Droid.CustomRenderers
             base.Dispose(disposing);
         }
 
-
+        #region Event handler for set value to Xamarin.Forms control.
         private void _droidCameraPreview2_SensorOrientationUpdated(object sender, EventArgs e)
         {
             var s = sender as DroidCameraPreview2;
@@ -108,7 +107,6 @@ namespace XFGetCameraData.Droid.CustomRenderers
             _formsCameraPreview2.SensorOrientation = s.SensorOrientation;
             _formsCameraPreview2.OnSensorOrientationUpdated(EventArgs.Empty);
         }
-
         private async void _droidCameraPreview2_JpegBytesUpdated(object sender, EventArgs e)
         {
             var s = sender as DroidCameraPreview2;
@@ -188,10 +186,14 @@ namespace XFGetCameraData.Droid.CustomRenderers
             this.FrameCount = s.FrameCount;
             _formsCameraPreview2.FrameCount = s.FrameCount;
         }
+        #endregion
     }
 
     public class DroidCameraPreview2 : FrameLayout
     {
+        public Android.Widget.LinearLayout _linearLayout { get; }
+        public bool OpeningCamera { private get; set; }
+
         public static readonly SparseIntArray ORIENTATIONS = new SparseIntArray();
         public static readonly int REQUEST_CAMERA_PERMISSION = 1;
         private static readonly string FRAGMENT_DIALOG = "dialog";
@@ -214,27 +216,39 @@ namespace XFGetCameraData.Droid.CustomRenderers
         // Camera state: Picture was taken.
         public const int STATE_PICTURE_TAKEN = 4;
 
+        public const long UPDATE_FRAME_SPAN = 4;//例:64フレーム毎にFrameやBitmapプロパティを更新する.
+
+
         // Max preview width that is guaranteed by Camera2 API
         private static readonly int MAX_PREVIEW_WIDTH = 1920;
 
         // Max preview height that is guaranteed by Camera2 API
         private static readonly int MAX_PREVIEW_HEIGHT = 1080;
 
+        public int CameraState = STATE_PREVIEW;
+
+        #region Important
         private readonly Context _context;
         public TextureView CameraTexture;
 
+        private HandlerThread _backgroundThread;
+        public Handler BackgroundHandler { get; internal set; }
+
+        private string _cameraId;
+        private CameraManager _cameraManager;
+
+        private Android.Util.Size _previewSize;
+        #endregion
+
+        #region Listener
         public CameraCaptureSessionListener CameraCaptureSessionListener { get; internal set; }
         public CameraCaptureStillPictureSessionListener CameraCaptureStillPictureSessionListener { get; }
         public ImageAvailableListener ImageAvailableListener { get; }
         private readonly CameraSurfaceTextureListener _surfaceTextureListener;
         private CameraDevice.StateCallback _cameraStateListener;
+        #endregion
 
-
-        public Android.Widget.LinearLayout _linearLayout { get; }
-        public bool OpeningCamera { private get; set; }
-
-        public int CameraState = STATE_PREVIEW;
-
+        #region Data which be set to custome renderer class.
         private bool _isPreviewing;
         public bool IsPreviewing
         {
@@ -258,7 +272,6 @@ namespace XFGetCameraData.Droid.CustomRenderers
                 }
             }
         }
-
         private CameraOption _cameraOption;
         public CameraOption CameraOption
         {
@@ -273,7 +286,6 @@ namespace XFGetCameraData.Droid.CustomRenderers
                 StartCamera();
             }
         }
-
         private byte[] _jpegBytes;
         public byte[] JpegBytes
         {
@@ -300,7 +312,6 @@ namespace XFGetCameraData.Droid.CustomRenderers
                 OnAndroidBitmapUpdated(EventArgs.Empty);
             }
         }
-
         private long _frameCount;
         public long FrameCount
         {
@@ -314,12 +325,30 @@ namespace XFGetCameraData.Droid.CustomRenderers
                 OnFrameCountUpdated(EventArgs.Empty);
             }
         }
+        private int _sensorOrientation;
+        public int SensorOrientation
+        {
+            get
+            {
+                return _sensorOrientation;
+            }
+            internal set
+            {
+                _sensorOrientation = value;
+                OnSensorOrientationUpdated(EventArgs.Empty);
+            }
+        }
+        #endregion
+
+        #region Data which be set from Listener
         public CameraDevice CameraDevice { get; internal set; }
         public SurfaceTexture SurfaceTexture { get; internal set; }
         public CameraCaptureSession CaptureSession { get; internal set; }
         public ImageReader ImageReader { get; internal set; }
+        public CaptureResult CaptureResult { get; internal set; }
+        #endregion
 
-
+        #region Events called when property value changed.
         public event EventHandler JpegBytesUpdated;
         protected virtual void OnJpegBytesUpdated(EventArgs e)
         {
@@ -340,36 +369,14 @@ namespace XFGetCameraData.Droid.CustomRenderers
         {
             SensorOrientationUpdated?.Invoke(this, e);
         }
+        #endregion
 
+        #region Request Builder
         public CaptureRequest.Builder PreviewRequestBuilder;
         public CaptureRequest PreviewRequest { get; internal set; }
         public CaptureRequest.Builder StillCaptureBuilder { get; private set; }
         public CaptureRequest StillCaptureRequest { get; internal set; }
-
-        private int _sensorOrientation;
-        public int SensorOrientation
-        {
-            get
-            {
-                return _sensorOrientation;
-            }
-            internal set
-            {
-                _sensorOrientation = value;
-                OnSensorOrientationUpdated(EventArgs.Empty);
-            }
-        }
-
-        private HandlerThread _backgroundThread;
-        public Handler BackgroundHandler { get; internal set; }
-
-
-        public Android.Util.Size PreviewSize;
-
-        private string _cameraId;
-        private CameraManager _cameraManager;
-
-        public const long UPDATE_FRAME_SPAN = 4;//例:64フレーム毎にFrameやBitmapプロパティを更新する.
+        #endregion
 
 
         public DroidCameraPreview2(Context context) : base(context)
@@ -403,57 +410,6 @@ namespace XFGetCameraData.Droid.CustomRenderers
             #endregion
         }
 
-        internal void StartCamera()
-        {
-            //アプリ起動時に,表示領域が未作成の前にStartCameraが実行されることを防ぐ
-            if (this.SurfaceTexture == null)
-                return;
-
-            StartBackgroundThread();
-
-            this._cameraManager = (CameraManager)Android.App.Application.Context.GetSystemService(Context.CameraService);
-
-            var cameraIdList = this._cameraManager.GetCameraIdList();
-            CameraCharacteristics cameraCharacteristics = null;
-            //指定のカメラのidを取得する
-            //フロント,バックのカメラidの取得についてはこちらを参考
-            //https://bellsoft.jp/blog/system/detail_538
-            this._cameraId = cameraIdList.FirstOrDefault(cId =>
-            {
-                cameraCharacteristics = _cameraManager.GetCameraCharacteristics(cId);
-                var lensFacing = (int)cameraCharacteristics.Get(CameraCharacteristics.LensFacing);
-                if (lensFacing == (int)this.CameraOption)
-                    return true;
-                return false;
-            });
-            Android.Hardware.Camera2.Params.StreamConfigurationMap scm = (Android.Hardware.Camera2.Params.StreamConfigurationMap)cameraCharacteristics.Get(CameraCharacteristics.ScalerStreamConfigurationMap);
-            this.PreviewSize = scm.GetOutputSizes((int)ImageFormatType.Jpeg)[0];
-
-            this.SensorOrientation = (int)cameraCharacteristics.Get(CameraCharacteristics.SensorOrientation);
-
-
-            SetupImageReader();
-
-            this._cameraStateListener = new CameraStateListener(this);
-            _cameraManager.OpenCamera(_cameraId, this._cameraStateListener, null);
-        }
-        internal void StopCamera()
-        {
-            this.CaptureSession?.Close();
-            this.CaptureSession = null;
-
-            this.CameraDevice?.Close();
-            this.CameraDevice = null;
-
-            StopBackgroundThread();
-        }
-
-        private void SetupImageReader()
-        {
-            this.ImageReader = ImageReader.NewInstance(480, 640, ImageFormatType.Jpeg, 1);
-            this.ImageReader.SetOnImageAvailableListener(this.ImageAvailableListener, this.BackgroundHandler);
-        }
-
         private void StartBackgroundThread()
         {
             _backgroundThread = new HandlerThread("CameraBackground");//名前付きでスレッドを作成
@@ -478,6 +434,55 @@ namespace XFGetCameraData.Droid.CustomRenderers
             }
         }
 
+        internal void StartCamera()
+        {
+            //アプリ起動時に,表示領域が未作成の前にStartCameraが実行されることを防ぐ
+            if (this.SurfaceTexture == null)
+                return;
+
+            StartBackgroundThread();
+
+            this._cameraManager = (CameraManager)Android.App.Application.Context.GetSystemService(Context.CameraService);
+
+            var cameraIdList = this._cameraManager.GetCameraIdList();
+            CameraCharacteristics cameraCharacteristics = null;
+            //指定のカメラのidを取得する
+            //フロント,バックのカメラidの取得についてはこちらを参考
+            //https://bellsoft.jp/blog/system/detail_538
+            this._cameraId = cameraIdList.FirstOrDefault(cId =>
+            {
+                cameraCharacteristics = _cameraManager.GetCameraCharacteristics(cId);
+                var lensFacing = (int)cameraCharacteristics.Get(CameraCharacteristics.LensFacing);
+                if (lensFacing == (int)this.CameraOption)
+                    return true;
+                return false;
+            });
+            Android.Hardware.Camera2.Params.StreamConfigurationMap scm = (Android.Hardware.Camera2.Params.StreamConfigurationMap)cameraCharacteristics.Get(CameraCharacteristics.ScalerStreamConfigurationMap);
+            this._previewSize = scm.GetOutputSizes((int)ImageFormatType.Jpeg)[0];
+
+            this.SensorOrientation = (int)cameraCharacteristics.Get(CameraCharacteristics.SensorOrientation);
+
+            //ImageReaderの設定
+            this.ImageReader = ImageReader.NewInstance(480, 640, ImageFormatType.Jpeg, 1);
+            this.ImageReader.SetOnImageAvailableListener(this.ImageAvailableListener, this.BackgroundHandler);
+
+            this._cameraStateListener = new CameraStateListener(this);
+            _cameraManager.OpenCamera(_cameraId, this._cameraStateListener, null);
+        }
+        internal void StopCamera()
+        {
+            this.CaptureSession?.Close();
+            this.CaptureSession = null;
+
+            this.CameraDevice?.Close();
+            this.CameraDevice = null;
+
+            StopBackgroundThread();
+        }
+
+        /// <summary>
+        /// CameraStateListenerのOnOpenedから呼び出される
+        /// </summary>
         internal void CreateCameraPreviewSession()
         {
             try
@@ -487,7 +492,7 @@ namespace XFGetCameraData.Droid.CustomRenderers
                     throw new IllegalStateException("SurfaceTexture is null");
                 }
 
-                this.SurfaceTexture.SetDefaultBufferSize(PreviewSize.Width, PreviewSize.Height);
+                this.SurfaceTexture.SetDefaultBufferSize(_previewSize.Width, _previewSize.Height);
 
                 //プレビュー用
                 this.PreviewRequestBuilder = this.CameraDevice.CreateCaptureRequest(CameraTemplate.Preview);
