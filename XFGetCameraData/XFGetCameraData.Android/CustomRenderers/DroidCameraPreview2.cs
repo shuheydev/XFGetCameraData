@@ -336,6 +336,7 @@ namespace XFGetCameraData.Droid.CustomRenderers
                 PreviewRequestBuilder.AddTarget(previewSurface);
 
                 //キャプチャ用
+                //プレビューキャプチャと同じタイミングで動作させるのではなく,独立させたい場合は,RequestBuilderを別に作成する.
                 //this.StillCaptureBuilder = this.CameraDevice.CreateCaptureRequest(CameraTemplate.StillCapture);
                 Surface readerSurface = this.ImageReader.Surface;
                 PreviewRequestBuilder.AddTarget(readerSurface);
