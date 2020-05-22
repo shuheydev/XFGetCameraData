@@ -2,6 +2,7 @@
 using Xamarin.Essentials;
 using Xamarin.Forms;
 using Xamarin.Forms.Xaml;
+using XFGetCameraData.Views;
 
 namespace XFGetCameraData
 {

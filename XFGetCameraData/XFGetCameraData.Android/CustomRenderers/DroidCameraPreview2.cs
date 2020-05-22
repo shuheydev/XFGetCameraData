@@ -15,11 +15,14 @@ using Android.Views;
 using Android.Widget;
 using Java.Lang;
 using XFGetCameraData.CustomRenderers;
+using XFGetCameraData.Droid.CustomRenderers;
 using XFGetCameraData.Droid.CustomRenderers.Listeners;
+using XFGetCameraData.Services;
 
+[assembly: Xamarin.Forms.Dependency(typeof(DroidCameraPreview2))]
 namespace XFGetCameraData.Droid.CustomRenderers
 {
-    public class DroidCameraPreview2 : FrameLayout
+    public class DroidCameraPreview2 : FrameLayout, IDroidCameraPreview2
     {
         //public Android.Widget.LinearLayout _linearLayout { get; }
         //public bool OpeningCamera { private get; set; }
@@ -55,15 +58,17 @@ namespace XFGetCameraData.Droid.CustomRenderers
 
         //public int CameraState = STATE_PREVIEW;
 
-        public const long UPDATE_FRAME_SPAN = 4;//例:64フレーム毎にFrameやBitmapプロパティを更新する.
-        public static readonly SparseIntArray ORIENTATIONS = new SparseIntArray();
+        internal const string BACKGROUND_THREAD_TAG = "CameraBackground";
+
+        internal const long UPDATE_FRAME_SPAN = 4;//例:64フレーム毎にFrameやBitmapプロパティを更新する.
+        internal static readonly SparseIntArray ORIENTATIONS = new SparseIntArray();
 
         #region Important
         private readonly Context _context;
-        public TextureView CameraTexture;
+        internal TextureView CameraTexture;
 
         private HandlerThread _backgroundThread;
-        public Handler BackgroundHandler { get; internal set; }
+        internal Handler BackgroundHandler { get; set; }
 
         private string _cameraId;
         private CameraManager _cameraManager;
@@ -72,10 +77,10 @@ namespace XFGetCameraData.Droid.CustomRenderers
         #endregion
 
         #region Listener
-        public CameraCaptureSessionListener CameraCaptureSessionListener { get; internal set; }
-        public CameraCaptureStillPictureSessionListener CameraCaptureStillPictureSessionListener { get; }
-        public ImageAvailableListener ImageAvailableListener { get; }
-        private readonly CameraSurfaceTextureListener _surfaceTextureListener;
+        internal CameraCaptureSessionListener CameraCaptureSessionListener { get; private set; }
+        private CameraCaptureStillPictureSessionListener CameraCaptureStillPictureSessionListener { get; set; }
+        private ImageAvailableListener ImageAvailableListener { get; set; }
+        private CameraSurfaceTextureListener _surfaceTextureListener { get; set; }
         private CameraDevice.StateCallback _cameraStateListener;
         #endregion
 
@@ -124,14 +129,14 @@ namespace XFGetCameraData.Droid.CustomRenderers
             {
                 return _jpegBytes;
             }
-            internal set
+            set
             {
                 _jpegBytes = value;
                 OnJpegBytesUpdated(EventArgs.Empty);
             }
         }
         private Android.Graphics.Bitmap _androidBitmap;
-        public Android.Graphics.Bitmap AndroidBitmap
+        internal Android.Graphics.Bitmap AndroidBitmap
         {
             get
             {
@@ -157,13 +162,13 @@ namespace XFGetCameraData.Droid.CustomRenderers
             }
         }
         private int _sensorOrientation;
-        public int SensorOrientation
+        internal int SensorOrientation
         {
             get
             {
                 return _sensorOrientation;
             }
-            internal set
+            set
             {
                 _sensorOrientation = value;
                 OnSensorOrientationUpdated(EventArgs.Empty);
@@ -172,11 +177,11 @@ namespace XFGetCameraData.Droid.CustomRenderers
         #endregion
 
         #region Data which be set from Listener
-        public CameraDevice CameraDevice { get; internal set; }
-        public SurfaceTexture SurfaceTexture { get; internal set; }
-        public CameraCaptureSession CaptureSession { get; internal set; }
-        public ImageReader ImageReader { get; internal set; }
-        public CaptureResult CaptureResult { get; internal set; }
+        internal CameraDevice CameraDevice { get; set; }
+        internal SurfaceTexture SurfaceTexture { get; set; }
+        internal CameraCaptureSession CaptureSession { get; set; }
+        internal ImageReader ImageReader { get; set; }
+        internal CaptureResult CaptureResult { get; set; }
         #endregion
 
         #region Events called when property value changed.
@@ -203,21 +208,21 @@ namespace XFGetCameraData.Droid.CustomRenderers
         #endregion
 
         #region Request Builder
-        public CaptureRequest.Builder PreviewRequestBuilder;
-        public CaptureRequest PreviewRequest { get; internal set; }
-        public CaptureRequest.Builder StillCaptureBuilder { get; private set; }
-        public CaptureRequest StillCaptureRequest { get; internal set; }
+        internal CaptureRequest.Builder PreviewRequestBuilder { get; set; }
+        internal CaptureRequest PreviewRequest { get; set; }
+        internal CaptureRequest.Builder StillCaptureBuilder { get; set; }
+        internal CaptureRequest StillCaptureRequest { get; set; }
         #endregion
 
 
         public DroidCameraPreview2(Context context) : base(context)
         {
+            this._context = context;
+
             ORIENTATIONS.Append((int)SurfaceOrientation.Rotation0, 90);
             ORIENTATIONS.Append((int)SurfaceOrientation.Rotation90, 0);
             ORIENTATIONS.Append((int)SurfaceOrientation.Rotation180, 270);
             ORIENTATIONS.Append((int)SurfaceOrientation.Rotation270, 180);
-
-            this._context = context;
 
             #region プレビュー用のViewを用意する.
             //予め用意しておいたレイアウトファイルを読み込む場合はこのようにする
@@ -243,7 +248,7 @@ namespace XFGetCameraData.Droid.CustomRenderers
 
         private void StartBackgroundThread()
         {
-            _backgroundThread = new HandlerThread("CameraBackground");//名前付きでスレッドを作成
+            _backgroundThread = new HandlerThread(BACKGROUND_THREAD_TAG);//名前付きでスレッドを作成
             _backgroundThread.Start();
             this.BackgroundHandler = new Handler(_backgroundThread.Looper);
         }
@@ -265,7 +270,7 @@ namespace XFGetCameraData.Droid.CustomRenderers
             }
         }
 
-        internal void StartCamera()
+        public void StartCamera()
         {
             //アプリ起動時に,表示領域が未作成の前にStartCameraが実行されることを防ぐ
             if (this.SurfaceTexture == null)
@@ -300,7 +305,7 @@ namespace XFGetCameraData.Droid.CustomRenderers
             this._cameraStateListener = new CameraStateListener(this);
             _cameraManager.OpenCamera(_cameraId, this._cameraStateListener, null);
         }
-        internal void StopCamera()
+        public void StopCamera()
         {
             this.CaptureSession?.Close();
             this.CaptureSession = null;
