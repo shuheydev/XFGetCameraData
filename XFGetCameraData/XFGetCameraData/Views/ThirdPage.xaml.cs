@@ -8,20 +8,37 @@ using System.Text;
 using System.Threading.Tasks;
 using Xamarin.Essentials;
 using Xamarin.Forms;
-using Xamarin.Forms.Xaml;
 using XFGetCameraData.CustomRenderers;
 using XFGetCameraData.Services;
 
 namespace XFGetCameraData.Views
 {
-    [XamlCompilation(XamlCompilationOptions.Compile)]
-    public partial class SecondPage : ContentPage
+    // Learn more about making custom code visible in the Xamarin.Forms previewer
+    // by visiting https://aka.ms/xamarinforms-previewer
+    [DesignTimeVisible(false)]
+    public partial class ThirdPage : ContentPage
     {
-        public SecondPage()
+        public ThirdPage()
         {
             InitializeComponent();
 
             this.BindingContext = this;
+        }
+
+        async void Handle_Clicked(object sender, System.EventArgs e)
+        {
+            await Navigation.PushAsync(new ContentPage { Title = "空のページ" });
+        }
+
+        async Task<PermissionStatus> GetCameraPermission()
+        {
+            var status = await Permissions.CheckStatusAsync<Permissions.Camera>();
+            if (status != PermissionStatus.Granted)
+            {
+                status = await Permissions.RequestAsync<Permissions.Camera>();
+            }
+
+            return status;
         }
 
         private void Button_Clicked(object sender, EventArgs e)
@@ -45,5 +62,6 @@ namespace XFGetCameraData.Views
 
             task.Start();
         }
+
     }
 }

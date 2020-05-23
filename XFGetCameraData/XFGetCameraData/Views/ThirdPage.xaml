@@ -1,0 +1,43 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    x:Class="XFGetCameraData.Views.ThirdPage"
+    xmlns="http://xamarin.com/schemas/2014/forms"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:d="http://xamarin.com/schemas/2014/forms/design"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:my="clr-namespace:XFGetCameraData.CustomRenderers"
+    Visual="Material"
+    mc:Ignorable="d">
+
+    <StackLayout Spacing="0">
+        <AbsoluteLayout HorizontalOptions="FillAndExpand" VerticalOptions="FillAndExpand">
+            <my:CameraPreview
+                x:Name="CameraPreview"
+                AbsoluteLayout.LayoutBounds="0,0,1,1"
+                AbsoluteLayout.LayoutFlags="All"
+                Camera="Rear"
+                IsPreviewing="true" />
+
+            <Label
+                AbsoluteLayout.LayoutBounds="0,0,AutoSize,AutoSize"
+                AbsoluteLayout.LayoutFlags="PositionProportional"
+                BindingContext="{x:Reference CameraPreview2}"
+                Text="{Binding FrameCount, StringFormat='FrameCount:{0:G}'}"
+                TextColor="#70FFFFFF" />
+        </AbsoluteLayout>
+        <StackLayout
+            Margin="0"
+            Padding="4,4,4,4"
+            BackgroundColor="#50CCCCCC"
+            HeightRequest="48"
+            Orientation="Horizontal"
+            VerticalOptions="End">
+            <Button
+                Clicked="Handle_Clicked"
+                HeightRequest="40"
+                HorizontalOptions="Center"
+                Text="Next"
+                VerticalOptions="CenterAndExpand" />
+        </StackLayout>
+    </StackLayout>
+</ContentPage>
