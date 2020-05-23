@@ -6,6 +6,7 @@
     xmlns:d="http://xamarin.com/schemas/2014/forms/design"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:my="clr-namespace:XFGetCameraData.CustomRenderers"
+    Visual="Material"
     mc:Ignorable="d">
 
     <StackLayout Spacing="0">
@@ -20,15 +21,25 @@
                 x:Name="CameraPreview2"
                 AbsoluteLayout.LayoutBounds="0,0,480,640"
                 AbsoluteLayout.LayoutFlags="PositionProportional"
-                IsPreviewing="True" />
+                Camera="Back"
+                ImageSourceUpdated="CameraPreview2_ImageSourceUpdated"
+                IsPreviewing="true"
+                JpegBytesUpdated="CameraPreview2_JpegBytesUpdated"
+                SensorOrientationUpdated="CameraPreview2_SensorOrientationUpdated" />
             <!--<Button Text="Camera" Clicked="Button_Clicked"/>-->
-            <Button Clicked="Button_Clicked_1" Text="Camera On/Off" />
+
             <Label
                 AbsoluteLayout.LayoutBounds="0,0,AutoSize,AutoSize"
                 AbsoluteLayout.LayoutFlags="PositionProportional"
                 BindingContext="{x:Reference CameraPreview2}"
-                Text="{Binding FrameNumber, StringFormat='FrameCount:{0:G}'}"
+                Text="{Binding FrameCount, StringFormat='FrameCount:{0:G}'}"
                 TextColor="#70FFFFFF" />
+
+            <Image
+                x:Name="frameImage"
+                AbsoluteLayout.LayoutBounds="1,1,0.5,0.5"
+                AbsoluteLayout.LayoutFlags="All"
+                Source="{Binding FrameImageSource}" />
         </AbsoluteLayout>
         <StackLayout
             Margin="0"
@@ -43,7 +54,10 @@
                 HorizontalOptions="Center"
                 Text="Next"
                 VerticalOptions="CenterAndExpand" />-->
-            <Image BindingContext="{x:Reference CameraPreview2}" Source="{Binding Frame}" />
+            <!--<Image BindingContext="{x:Reference CameraPreview2}" Source="{Binding Frame}" />-->
+
+            <Button Clicked="Button_Clicked_1" Text="Preview On/Off" />
+            <Button Clicked="Button_Clicked_2" Text="Camera Back/Front" />
         </StackLayout>
 
     </StackLayout>

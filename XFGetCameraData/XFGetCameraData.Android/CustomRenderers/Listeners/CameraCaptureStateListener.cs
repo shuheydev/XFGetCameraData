@@ -15,62 +15,59 @@ namespace XFGetCameraData.Droid.CustomRenderers.Listeners
 {
     public class CameraCaptureStateListener : CameraCaptureSession.StateCallback
     {
-        private readonly CaptureRequest _previewRequest;
-        private readonly Handler _backgroundHandler;
-        private CameraCaptureSession _cameraCaptureSession = null;
-        private CameraCaptureListener _cameraCaptureListener;
+        private readonly DroidCameraPreview2 _owner;
 
         public long FrameNumber { get; private set; }
 
-        public CameraCaptureStateListener(CaptureRequest previewRequest,
-                                          Handler backgroundHandler)
+        public CameraCaptureStateListener(DroidCameraPreview2 owner)
         {
-            this._previewRequest = previewRequest;
-            this._backgroundHandler = backgroundHandler;
+            if (owner == null)
+                throw new ArgumentNullException(nameof(owner));
+            this._owner = owner;
         }
 
         //Sessionの設定完了(準備完了).プレビュー表示を開始
         public override void OnConfigured(CameraCaptureSession session)
         {
-            this._cameraCaptureSession = session;
-            //_cameraCaptureListenerで1フレームごとのキャプチャに対する処理を行う
-            //それをリスナーとして埋め込む
-            this._cameraCaptureListener = new CameraCaptureListener();
-            this._cameraCaptureListener.CaptureCompleted += CameraCaptureListener_CaptureCompleted;
-            //カメラプレビューを開始(TextureViewにカメラの画像が表示され続ける
-            session.SetRepeatingRequest(_previewRequest,
-                                        _cameraCaptureListener,
-                                        _backgroundHandler);
+            if (this._owner.CameraDevice == null)
+                return;
+
+            this._owner.CaptureSession = session;
+
+            this.ProcessOnConfigured();
         }
         public override void OnConfigureFailed(CameraCaptureSession session)
         {
         }
 
-        public event EventHandler CaptureCompleted;
-        protected virtual void OnCaptureCompleted(EventArgs e)
-        {
-            CaptureCompleted?.Invoke(this, e);
-        }
-        private void CameraCaptureListener_CaptureCompleted(object sender, EventArgs e)
-        {
-            var s = sender as CameraCaptureListener;
-            if (s is null)
-                return;
 
-            this.FrameNumber = s.FrameNumber;
-            OnCaptureCompleted(e);
-        }
-
-        internal void StopPreview()
+        /// <summary>
+        /// CameraCaptureStateListenerのOnConfiguredから呼び出される
+        /// </summary>
+        private void ProcessOnConfigured()
         {
-            this._cameraCaptureSession?.StopRepeating();
-        }
+            try
+            {
+                //オートフォーカスの設定
+                //https://qiita.com/ohwada/items/d33cd9c90abf3ec01f9e
+                this._owner.PreviewRequestBuilder.Set(CaptureRequest.ControlAfMode,
+                                                      (int)ControlAFMode.ContinuousPicture);
 
-        internal void RestartPreview()
-        {
-            this._cameraCaptureSession.SetRepeatingRequest(_previewRequest,
-                             _cameraCaptureListener,
-                             _backgroundHandler);
+                //this._owner.StillCaptureBuilder.Set(CaptureRequest.ControlAfTrigger, (int)ControlAFTrigger.Start);
+                //this._owner.StillCaptureBuilder.Set(CaptureRequest.ControlAfMode, (int)ControlAFMode.ContinuousPicture);
+                //var orientation = (DroidCameraPreview2.ORIENTATIONS.Get(1) + this._owner.SensorOrientation + 270) % 360;
+                //this._owner.StillCaptureBuilder.Set(CaptureRequest.JpegOrientation, orientation);
+
+                //ここでやっとプレビューが表示される.
+                this._owner.PreviewRequest = this._owner.PreviewRequestBuilder.Build();
+                this._owner.CaptureSession.SetRepeatingRequest(this._owner.PreviewRequest,
+                                                               this._owner.CameraCaptureSessionListener,
+                                                               this._owner.BackgroundHandler);
+            }
+            catch (CameraAccessException ex)
+            {
+                ex.PrintStackTrace();
+            }
         }
     }
 }

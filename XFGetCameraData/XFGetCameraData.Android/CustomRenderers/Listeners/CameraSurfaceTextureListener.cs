@@ -18,28 +18,25 @@ namespace XFGetCameraData.Droid.CustomRenderers.Listeners
 {
     public class CameraSurfaceTextureListener : Java.Lang.Object, TextureView.ISurfaceTextureListener
     {
-        public Bitmap Frame { get; private set; }
-        public long FrameNumber { get; private set; }
+        private readonly DroidCameraPreview2 _owner;
 
-        private CameraManager _cameraManager = null;
-        private HandlerThread _backgroundThread;
-        private Handler _backgroundHandler;
-        private TextureView _cameraTexture;
-        private CameraStateListener _cameraStateListener;
-
-        public CameraSurfaceTextureListener(TextureView cameraTexture)
+        public CameraSurfaceTextureListener(DroidCameraPreview2 owner)
         {
-            this._cameraTexture = cameraTexture;
+            if (owner == null)
+                throw new System.ArgumentException(nameof(owner));
+            this._owner = owner;
         }
 
-        public void OnSurfaceTextureAvailable(SurfaceTexture surface, int width, int height)
+        public void OnSurfaceTextureAvailable(SurfaceTexture surfaceTexture, int width, int height)
         {
-            this.StartCamera2(surface);
-        }
-        public bool OnSurfaceTextureDestroyed(SurfaceTexture surface)
-        {
-            this.StopCamera2();
+            this._owner.SurfaceTexture = surfaceTexture;
 
+            if (this._owner.IsPreviewing == true)
+                this._owner.StartCamera();
+        }
+        public bool OnSurfaceTextureDestroyed(SurfaceTexture surfaceTexture)
+        {
+            this._owner.StopCamera();
             return true;
         }
         public void OnSurfaceTextureSizeChanged(SurfaceTexture surface, int width, int height)
@@ -47,90 +44,33 @@ namespace XFGetCameraData.Droid.CustomRenderers.Listeners
         }
         public void OnSurfaceTextureUpdated(SurfaceTexture surface)
         {
-            //32フレーム毎にBitmap画像を取得する.
-            if (this.FrameNumber % 32 != 0)
+            this._owner.SurfaceTexture = surface;
+
+            this.ProcessOnSurfaceTextureUpdate();
+        }
+
+        /// <summary>
+        /// CameraSurfaceTextureListenerのOnSurfaceTextureUpdatedから呼び出される
+        /// </summary>
+        private void ProcessOnSurfaceTextureUpdate()
+        {
+            if (DroidCameraPreview2.UPDATE_FRAME_SPAN == 0)
+                return;
+
+            //Frameカウントを取得できていないとずっと動き続けてしまうので
+            if (this._owner.FrameCount == 0)
+                return;
+
+            //指定したフレーム間隔でBitmapを取得する
+            if (this._owner.FrameCount % DroidCameraPreview2.UPDATE_FRAME_SPAN != 0)
                 return;
 
             //Frame毎に更新される
             //https://stackoverflow.com/questions/29413431/how-to-get-single-preview-frame-in-camera2-api-android-5-0
-            var frame = Android.Graphics.Bitmap.CreateBitmap(_cameraTexture.Width, _cameraTexture.Height, Android.Graphics.Bitmap.Config.Argb8888);
-            _cameraTexture.GetBitmap(frame);
+            var bitmap = Android.Graphics.Bitmap.CreateBitmap(this._owner.CameraTexture.Width, this._owner.CameraTexture.Height, Android.Graphics.Bitmap.Config.Argb8888);//previewSizeは大きすぎる.カメラの解像度になる
+            this._owner.CameraTexture.GetBitmap(bitmap);
 
-            this.Frame = frame;
-            OnTextureUpdated(EventArgs.Empty);
-        }
-
-        private void StartBackgroundThread()
-        {
-            _backgroundThread = new HandlerThread("CameraBackground");//名前付きでスレッドを作成
-            _backgroundThread.Start();
-            _backgroundHandler = new Handler(_backgroundThread.Looper);
-        }
-        private void StopBackgroundThread()
-        {
-            _backgroundThread.QuitSafely();
-            try
-            {
-                _backgroundThread.Join();
-                _backgroundThread = null;
-                _backgroundHandler = null;
-            }
-            catch (InterruptedException ex)
-            {
-                ex.PrintStackTrace();
-            }
-        }
-
-        private void StartCamera2(SurfaceTexture surface)
-        {
-            StartBackgroundThread();
-
-            _cameraManager = (CameraManager)Android.App.Application.Context.GetSystemService(Context.CameraService);
-            string cameraId = _cameraManager.GetCameraIdList().FirstOrDefault();
-            CameraCharacteristics cameraCharacteristics = _cameraManager.GetCameraCharacteristics(cameraId);
-            Android.Hardware.Camera2.Params.StreamConfigurationMap scm = (Android.Hardware.Camera2.Params.StreamConfigurationMap)cameraCharacteristics.Get(CameraCharacteristics.ScalerStreamConfigurationMap);
-            var previewSize = scm.GetOutputSizes((int)ImageFormatType.Jpeg)[0];
-
-            this._cameraStateListener = new CameraStateListener(surface, previewSize, _backgroundHandler);
-            this._cameraStateListener.CaptureCompleted += CameraStateListener_CaptureCompleted;
-
-            _cameraManager.OpenCamera(cameraId, this._cameraStateListener, _backgroundHandler);
-        }
-        private void StopCamera2()
-        {
-            StopBackgroundThread();           
-        }
-
-        public event EventHandler CaptureCompleted;
-        protected virtual void OnCaptureCompleted(EventArgs e)
-        {
-            CaptureCompleted?.Invoke(this, e);
-        }
-
-        public event EventHandler TextureUpdated;
-        protected virtual void OnTextureUpdated(EventArgs e)
-        {
-            TextureUpdated?.Invoke(this, e);
-        }
-
-        private void CameraStateListener_CaptureCompleted(object sender, EventArgs e)
-        {
-            var s = sender as CameraStateListener;
-            if (s is null)
-                return;
-
-            this.FrameNumber = s.FrameNumber;
-            OnCaptureCompleted(EventArgs.Empty);
-        }
-
-        internal void RestartPreview()
-        {
-            this._cameraStateListener?.RestartPreview();
-        }
-
-        internal void StopPreview()
-        {
-            this._cameraStateListener?.StopPreview();
+            this._owner.AndroidBitmap = bitmap;
         }
     }
 }

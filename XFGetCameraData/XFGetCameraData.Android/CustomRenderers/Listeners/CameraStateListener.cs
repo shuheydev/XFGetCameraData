@@ -11,88 +11,35 @@ using Android.Runtime;
 using Android.Util;
 using Android.Views;
 using Android.Widget;
+using Xamarin.Forms.Internals;
 
 namespace XFGetCameraData.Droid.CustomRenderers.Listeners
 {
     public class CameraStateListener : CameraDevice.StateCallback
     {
-        private readonly SurfaceTexture _surface;
-        private readonly Size _previewSize;
-        private readonly Handler _backgroundHandler;
-        private CameraDevice _camera;
-        private CameraCaptureStateListener _captureStateListener;
+        private readonly DroidCameraPreview2 _owner;
 
         public long FrameNumber { get; private set; }
 
-        public CameraStateListener(SurfaceTexture surface, Android.Util.Size previewSize, Handler backgroundHandler)
+        public CameraStateListener(DroidCameraPreview2 owner)
         {
-            this._surface = surface;
-            this._previewSize = previewSize;
-            this._backgroundHandler = backgroundHandler;
+            this._owner = owner;
         }
 
-        public override void OnOpened(CameraDevice camera)
+        public override void OnOpened(CameraDevice cameraDevice)
         {
-            _surface.SetDefaultBufferSize(_previewSize.Width, _previewSize.Height);
-            Surface surface = new Surface(_surface);
-
-            List<Surface> surfaces = new List<Surface>();
-            surfaces.Add(surface);
-
-            var previewBuilder = camera.CreateCaptureRequest(CameraTemplate.Preview);
-            //オートフォーカスの設定
-            //https://qiita.com/ohwada/items/d33cd9c90abf3ec01f9e
-            previewBuilder.Set(CaptureRequest.ControlAfMode, (int)ControlAFMode.ContinuousPicture);
-            //_previewBuilder.Set(CaptureRequest.ControlAfTrigger, (int)ControlAFTrigger.Start);
-
-            previewBuilder.AddTarget(surface);
-            var previewRequest = previewBuilder.Build();
-
-            this._captureStateListener = new CameraCaptureStateListener(previewRequest, _backgroundHandler);
-            this._captureStateListener.CaptureCompleted += CaptureStateListener_CaptureCompleted;
-            //CameraCaptureSessionを生成
-            camera.CreateCaptureSession(surfaces, this._captureStateListener, _backgroundHandler);
+            this._owner.CameraDevice = cameraDevice;
+            this._owner.CreateCameraPreviewSession();
         }
-        public override void OnDisconnected(CameraDevice camera)
+        public override void OnDisconnected(CameraDevice cameraDevice)
         {
-            _camera = camera;
-            Close();
+            this._owner.CameraDevice.Close();
+            this._owner.CameraDevice = null;
         }
-        public override void OnError(CameraDevice camera, [GeneratedEnum] CameraError error)
+        public override void OnError(CameraDevice cameraDevice, [GeneratedEnum] CameraError error)
         {
-            _camera = camera;
-            Close();
-        }
-
-        public void Close()
-        {
-            _camera.Close();
-            _camera = null;
-        }
-
-        public event EventHandler CaptureCompleted;
-        protected virtual void OnCaptureCompleted(EventArgs e)
-        {
-            CaptureCompleted?.Invoke(this, e);
-        }
-        private void CaptureStateListener_CaptureCompleted(object sender, EventArgs e)
-        {
-            var s = sender as CameraCaptureStateListener;
-            if (s is null)
-                return;
-
-            this.FrameNumber = s.FrameNumber;
-            OnCaptureCompleted(EventArgs.Empty);
-        }
-
-        internal void StopPreview()
-        {
-            this._captureStateListener?.StopPreview();
-        }
-
-        internal void RestartPreview()
-        {
-            this._captureStateListener?.RestartPreview();
+            cameraDevice.Close();
+            this._owner.CameraDevice = null;
         }
     }
 }

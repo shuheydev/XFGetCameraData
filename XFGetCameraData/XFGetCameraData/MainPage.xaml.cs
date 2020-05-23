@@ -1,12 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Xamarin.Essentials;
 using Xamarin.Forms;
+using XFGetCameraData.CustomRenderers;
 using XFGetCameraData.Services;
 
 namespace XFGetCameraData
@@ -20,23 +22,7 @@ namespace XFGetCameraData
         {
             InitializeComponent();
 
-            CameraPreview2.PictureFinished += OnPictureFinished;
-
-            this.Disappearing += (sender, e) =>
-            {
-                //画面が非表示の時はプレビューを止める
-                this.CameraPreview2.IsPreviewing = false;
-            };
-
-            this.Appearing += async (sender, e) =>
-            {
-
-                if (await GetCameraPermission() != PermissionStatus.Granted)
-                    return;
-
-                //画面が表示されたらプレビューを開始する
-                this.CameraPreview2.IsPreviewing = true;
-            };
+            this.BindingContext = this;
         }
 
         private void OnPictureFinished()
@@ -85,6 +71,63 @@ namespace XFGetCameraData
         private void Button_Clicked_1(object sender, EventArgs e)
         {
             CameraPreview2.IsPreviewing = !CameraPreview2.IsPreviewing;
+        }
+
+        private void Button_Clicked_2(object sender, EventArgs e)
+        {
+            CameraPreview2.Camera = CameraPreview2.Camera == CameraOption.Back ? CameraOption.Front : CameraOption.Back;
+        }
+
+        private ImageSource _frameImageSource;
+        public ImageSource FrameImageSource
+        {
+            get => _frameImageSource;
+            set
+            {
+                _frameImageSource = value;
+                OnPropertyChanged();
+            }
+        }
+        private Bitmap _frameBitmap;
+        public Bitmap FrameBitmap
+        {
+            get => _frameBitmap;
+            set
+            {
+                _frameBitmap = value;
+                OnPropertyChanged();
+            }
+        }
+        private byte[] _frameJpegBytes;
+        public byte[] FrameJpegBytes
+        {
+            get => _frameJpegBytes;
+            set
+            {
+                _frameJpegBytes = value;
+                OnPropertyChanged();
+            }
+        }
+
+        private void CameraPreview2_ImageSourceUpdated(object sender, EventArgs e)
+        {
+            var s = sender as CameraPreview2;
+
+            FrameImageSource = s.ImageSource;
+        }
+
+        private void CameraPreview2_JpegBytesUpdated(object sender, EventArgs e)
+        {
+            var s = sender as CameraPreview2;
+
+            FrameJpegBytes = s.JpegBytes;
+        }
+
+        private void CameraPreview2_SensorOrientationUpdated(object sender, EventArgs e)
+        {
+            var s = sender as CameraPreview2;
+
+
         }
     }
 }
