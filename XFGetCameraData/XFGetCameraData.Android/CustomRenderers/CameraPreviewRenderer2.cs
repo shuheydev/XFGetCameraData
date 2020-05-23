@@ -106,7 +106,6 @@ namespace XFGetCameraData.Droid.CustomRenderers
 
             this.SensorOrientation = s.SensorOrientation;
             _formsCameraPreview2.SensorOrientation = s.SensorOrientation;
-            _formsCameraPreview2.OnSensorOrientationUpdated(EventArgs.Empty);
         }
         private async void _droidCameraPreview2_JpegBytesUpdated(object sender, EventArgs e)
         {
@@ -150,13 +149,13 @@ namespace XFGetCameraData.Droid.CustomRenderers
 
                 this.JpegBytes = rotatedBytes;
                 _formsCameraPreview2.JpegBytes = s.JpegBytes;
-                _formsCameraPreview2.OnJpegBytesUpdated(EventArgs.Empty);
+                //_formsCameraPreview2.OnJpegBytesUpdated(EventArgs.Empty);
 
                 //byte[] → ImageSource
                 var imgSource = ImageSource.FromStream(() => new MemoryStream(rotatedBytes));
                 this.ImageSource = ImageSource;
                 _formsCameraPreview2.ImageSource = imgSource;
-                _formsCameraPreview2.OnImageSourceUpdated(EventArgs.Empty);
+                //_formsCameraPreview2.OnImageSourceUpdated(EventArgs.Empty);
             }
         }
         private async void _droidCameraPreview2_AndroidBitmapUpdated(object sender, EventArgs e)
@@ -178,7 +177,7 @@ namespace XFGetCameraData.Droid.CustomRenderers
             var imageSource = ImageSource.FromStream(() => new MemoryStream(bitmapData));
             this.ImageSource = imageSource;
             _formsCameraPreview2.ImageSource = imageSource;
-            _formsCameraPreview2.OnImageSourceUpdated(EventArgs.Empty);
+            //_formsCameraPreview2.OnImageSourceUpdated(EventArgs.Empty);
         }
         private void _droidCameraPreview2_FrameCountUpdated(object sender, EventArgs e)
         {

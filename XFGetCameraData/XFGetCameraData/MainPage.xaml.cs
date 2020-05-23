@@ -127,7 +127,7 @@ namespace XFGetCameraData
         {
             var s = sender as CameraPreview2;
 
-            
+
         }
     }
 }

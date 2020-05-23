@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Drawing;
 using System.IO;
 using System.Runtime.CompilerServices;
@@ -7,12 +8,14 @@ using System.Text;
 using Xamarin.Forms;
 using Xamarin.Forms.Internals;
 
-[assembly: InternalsVisibleTo("XFGetCameraData.Droid")]
+//各プラットフォームのプロジェクトからinternalなメンバーが見えるように
+[assembly: InternalsVisibleTo("XFGetCameraData.Android")]
+[assembly: InternalsVisibleTo("XFGetCameraData.iOS")]
 namespace XFGetCameraData.CustomRenderers
 {
     public class CameraPreview2 : View
     {
-        Command cameraClick;
+        #region Property
         public static readonly BindableProperty IsPreviewingProperty = BindableProperty.Create(
             propertyName: "IsPreviewing",
             returnType: typeof(bool),
@@ -39,18 +42,34 @@ namespace XFGetCameraData.CustomRenderers
             propertyName: "FrameCount",
             returnType: typeof(long),
             declaringType: typeof(CameraPreview2),
+            propertyChanged: FrameCountPropertyChanged,
             defaultValue: 0L);
         public long FrameCount
         {
             get { return (long)GetValue(FrameCountProperty); }
             set { SetValue(FrameCountProperty, value); }
         }
+        private static void FrameCountPropertyChanged(BindableObject bindable, object oldValue, object newValue)
+        {
+            var cameraView = bindable as CameraPreview2;
+            if (cameraView == null)
+                return;
+            cameraView.OnFrameCountUpdated(EventArgs.Empty);
+        }
 
         public static readonly BindableProperty ImageSourceProperty = BindableProperty.Create(
             propertyName: "ImageSource",
             returnType: typeof(ImageSource),
             declaringType: typeof(CameraPreview2),
+            propertyChanged: ImageSourcePropertyChanged,
             defaultValue: null);
+        private static void ImageSourcePropertyChanged(BindableObject bindable, object oldValue, object newValue)
+        {
+            if (newValue == null)
+                return;
+            var cameraView = bindable as CameraPreview2;
+            cameraView?.OnImageSourceUpdated(EventArgs.Empty);
+        }
         public ImageSource ImageSource
         {
             get { return (ImageSource)GetValue(ImageSourceProperty); }
@@ -72,7 +91,16 @@ namespace XFGetCameraData.CustomRenderers
             propertyName: "JpegBytes",
             returnType: typeof(byte[]),
             declaringType: typeof(CameraPreview2),
+            propertyChanged: JpegBytesPropertyChanged,
             defaultValue: null);
+        private static void JpegBytesPropertyChanged(BindableObject bindable, object oldValue, object newValue)
+        {
+            if (newValue == null)
+                return;
+            var cameraView = bindable as CameraPreview2;
+            cameraView?.OnJpegBytesUpdated(EventArgs.Empty);
+        }
+
         public byte[] JpegBytes
         {
             get { return (byte[])GetValue(JpegBytesProperty); }
@@ -83,30 +111,47 @@ namespace XFGetCameraData.CustomRenderers
             propertyName: "SensorOrientation",
             returnType: typeof(int),
             declaringType: typeof(CameraPreview2),
+            propertyChanged: SensorOrientationPropertyChanged,
             defaultValue: 0);
         public int SensorOrientation
         {
             get { return (int)GetValue(SensorOrientationProperty); }
             set { SetValue(SensorOrientationProperty, value); }
         }
+        private static void SensorOrientationPropertyChanged(BindableObject bindable, object oldValue, object newValue)
+        {
+            var cameraView = bindable as CameraPreview2;
+            cameraView?.OnSensorOrientationUpdated(EventArgs.Empty);
+        }
+
+
+        #endregion
+
+        #region Event
+        public event EventHandler FrameCountupdated;
+        private void OnFrameCountUpdated(EventArgs e)
+        {
+            FrameCountupdated?.Invoke(this, e);
+        }
 
         public event EventHandler ImageSourceUpdated;
-        public void OnImageSourceUpdated(EventArgs e)
+        private void OnImageSourceUpdated(EventArgs e)
         {
             ImageSourceUpdated?.Invoke(this, e);
         }
 
         public event EventHandler JpegBytesUpdated;
-        public void OnJpegBytesUpdated(EventArgs e)
+        private void OnJpegBytesUpdated(EventArgs e)
         {
             JpegBytesUpdated?.Invoke(this, e);
         }
 
         public event EventHandler SensorOrientationUpdated;
-        public void OnSensorOrientationUpdated(EventArgs e)
+        private void OnSensorOrientationUpdated(EventArgs e)
         {
-            SensorOrientationUpdated?.Invoke(this,e);
+            SensorOrientationUpdated?.Invoke(this, e);
         }
+        #endregion
     }
 
     public enum CameraOption
