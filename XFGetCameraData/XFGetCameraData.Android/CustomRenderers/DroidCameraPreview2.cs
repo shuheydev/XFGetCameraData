@@ -224,11 +224,16 @@ namespace XFGetCameraData.Droid.CustomRenderers
             ORIENTATIONS.Append((int)SurfaceOrientation.Rotation180, 270);
             ORIENTATIONS.Append((int)SurfaceOrientation.Rotation270, 180);
 
+            Initialize();
+        }
+
+        private void Initialize()
+        {
             #region プレビュー用のViewを用意する.
             //予め用意しておいたレイアウトファイルを読み込む場合はこのようにする
             //この場合,Resource.LayoutにCameraLayout.xmlファイルを置いている.
             //中身はTextureViewのみ
-            var inflater = LayoutInflater.FromContext(context);
+            var inflater = LayoutInflater.FromContext(this._context);
             if (inflater == null)
                 return;
             var view = inflater.Inflate(Resource.Layout.CameraLayout, this);
