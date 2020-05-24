@@ -1,0 +1,14 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<Shell
+    x:Class="XFGetCameraData.AppShell"
+    xmlns="http://xamarin.com/schemas/2014/forms"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:d="http://xamarin.com/schemas/2014/forms/design"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:views="clr-namespace:XFGetCameraData.Views"
+    mc:Ignorable="d">
+
+    <ShellContent Title="CameraPreview2" ContentTemplate="{DataTemplate views:MainPage}" />
+    <ShellContent Title="VideoService" ContentTemplate="{DataTemplate views:SecondPage}" />
+    <!--<ShellContent Title="CameraPreview" ContentTemplate="{DataTemplate views:ThirdPage}" />-->
+</Shell>

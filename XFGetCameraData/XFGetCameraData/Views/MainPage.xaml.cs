@@ -11,7 +11,7 @@ using Xamarin.Forms;
 using XFGetCameraData.CustomRenderers;
 using XFGetCameraData.Services;
 
-namespace XFGetCameraData
+namespace XFGetCameraData.Views
 {
     // Learn more about making custom code visible in the Xamarin.Forms previewer
     // by visiting https://aka.ms/xamarinforms-previewer
