@@ -58,16 +58,21 @@ namespace XFGetCameraData.Droid.CustomRenderers.Listeners
 
 
             if (faces.Length <= 0)
+            {
+                this._owner.FaceDetectBoundsView.ClearBounds();
                 return;
-
+            }
             var h = this._owner.CameraTexture.Height;
             var w = this._owner.CameraTexture.Width;
             var hRatio = (double)h / this._owner._previewSize.Width;
             var wRation = (double)w / this._owner._previewSize.Height;
 
-            this._owner.FaceDetectBoundsView.ShowBoundsOnFace(faces,wRation,hRatio,this._owner._previewSize.Width, this._owner._previewSize.Height);
-
-            var b = 0;
+            this._owner.FaceDetectBoundsView.ShowBoundsOnFace(faces,
+                                                              wRation,
+                                                              hRatio,
+                                                              this._owner._previewSize.Width,
+                                                              this._owner._previewSize.Height,
+                                                              this._owner.SensorOrientation);
         }
 
         //private void Process(CaptureResult result)
