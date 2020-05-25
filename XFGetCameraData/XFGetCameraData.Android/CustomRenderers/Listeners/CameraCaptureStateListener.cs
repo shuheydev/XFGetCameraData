@@ -50,8 +50,9 @@ namespace XFGetCameraData.Droid.CustomRenderers.Listeners
             {
                 //オートフォーカスの設定
                 //https://qiita.com/ohwada/items/d33cd9c90abf3ec01f9e
-                this._owner.PreviewRequestBuilder.Set(CaptureRequest.ControlAfMode,
-                                                      (int)ControlAFMode.ContinuousPicture);
+                this._owner.PreviewRequestBuilder.Set(CaptureRequest.ControlMode, (int)ControlMode.Auto);
+                this._owner.PreviewRequestBuilder.Set(CaptureRequest.ControlAfMode,(int)ControlAFMode.ContinuousPicture);
+                this._owner.PreviewRequestBuilder.Set(CaptureRequest.StatisticsFaceDetectMode, (int)StatisticsFaceDetectMode.Simple);
 
                 //this._owner.StillCaptureBuilder.Set(CaptureRequest.ControlAfTrigger, (int)ControlAFTrigger.Start);
                 //this._owner.StillCaptureBuilder.Set(CaptureRequest.ControlAfMode, (int)ControlAFMode.ContinuousPicture);

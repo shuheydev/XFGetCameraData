@@ -69,13 +69,15 @@ namespace XFGetCameraData.Droid.CustomRenderers
         private readonly Context _context;
         internal TextureView CameraTexture;
 
+        public MyView FaceDetectBoundsView { get; private set; }
+
         private HandlerThread _backgroundThread;
         internal Handler BackgroundHandler { get; set; }
 
         private string _cameraId;
         private CameraManager _cameraManager;
 
-        private Android.Util.Size _previewSize;
+        public Android.Util.Size _previewSize { get; internal set; }
         #endregion
 
         #region Listener
@@ -244,6 +246,8 @@ namespace XFGetCameraData.Droid.CustomRenderers
             var view = inflater.Inflate(Resource.Layout.CameraLayout, this);
             CameraTexture = view.FindViewById<TextureView>(Resource.Id.cameraTexture);
 
+            this.FaceDetectBoundsView = view.FindViewById<MyView>(Resource.Id.faceDetectBounds);
+
             //リスナーの作成
             this.CameraCaptureSessionListener = new CameraCaptureSessionListener(this);
             this.CameraCaptureStillPictureSessionListener = new CameraCaptureStillPictureSessionListener(this);
@@ -318,7 +322,7 @@ namespace XFGetCameraData.Droid.CustomRenderers
             Android.Hardware.Camera2.Params.StreamConfigurationMap scm = (Android.Hardware.Camera2.Params.StreamConfigurationMap)cameraCharacteristics.Get(CameraCharacteristics.ScalerStreamConfigurationMap);
             this._previewSize = scm.GetOutputSizes((int)ImageFormatType.Jpeg)[0];
 
-            this.SensorOrientation = (int)cameraCharacteristics.Get(CameraCharacteristics.SensorOrientation);
+            this.SensorOrientation = (int)cameraCharacteristics.Get(CameraCharacteristics.SensorOrientation);//Back:4032*3024,Front:3264*2448
 
             //ImageReaderの設定
             this.ImageReader = ImageReader.NewInstance(480, 640, ImageFormatType.Jpeg, 1);

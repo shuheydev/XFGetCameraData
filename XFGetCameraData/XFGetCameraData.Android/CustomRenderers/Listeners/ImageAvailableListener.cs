@@ -75,6 +75,7 @@ namespace XFGetCameraData.Droid.CustomRenderers.Listeners
                 #endregion
             }
 
+            return;
             #region Firebase face detectを使った顔検出
             var imgForFirebase = FirebaseVisionImage.FromBitmap(this._owner.AndroidBitmap_Rotated);
             var options = new FirebaseVisionFaceDetectorOptions.Builder().Build();

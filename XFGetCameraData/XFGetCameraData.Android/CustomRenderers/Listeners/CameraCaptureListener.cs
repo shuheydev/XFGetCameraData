@@ -1,4 +1,7 @@
-﻿using Android.Hardware.Camera2;
+﻿using Android.Gms.Vision.Faces;
+using Android.Hardware.Camera2;
+using Android.Hardware.Camera2.Params;
+using Android.Runtime;
 using Java.Lang;
 using System;
 
@@ -27,16 +30,6 @@ namespace XFGetCameraData.Droid.CustomRenderers.Listeners
 
             this._owner.CaptureResult = result;
 
-            //Process(result);
-            //OnCaptureCompleted(EventArgs.Empty);
-
-            ////Still撮影をする場合はこれを追加する.
-            ////Captureメソッド実行でキャプチャされる
-            //this._owner.StillCaptureRequest = this._owner.StillCaptureBuilder.Build();
-            //this._owner.CaptureSession.Capture(this._owner.StillCaptureRequest,
-            //                                   this._owner.CameraCaptureStillPictureSessionListener,
-            //                                   this._owner.BackgroundHandler);
-
             this.ProcessOnCapture();
         }
         public override void OnCaptureProgressed(CameraCaptureSession session, CaptureRequest request, CaptureResult partialResult)
@@ -56,6 +49,25 @@ namespace XFGetCameraData.Droid.CustomRenderers.Listeners
         private void ProcessOnCapture()
         {
             this._owner.FrameCount = this._owner.CaptureResult.FrameNumber;
+
+            //Face[]の取得方法
+            //https://forums.xamarin.com/discussion/95912/xamarin-studio-android-face-detection-with-camera2
+            var f = this._owner.CaptureResult?.Get(CaptureResult.StatisticsFaces);
+            Android.Hardware.Camera2.Params.Face[] faces = f.ToArray<Android.Hardware.Camera2.Params.Face>();
+
+
+
+            if (faces.Length <= 0)
+                return;
+
+            var h = this._owner.CameraTexture.Height;
+            var w = this._owner.CameraTexture.Width;
+            var hRatio = (double)h / this._owner._previewSize.Width;
+            var wRation = (double)w / this._owner._previewSize.Height;
+
+            this._owner.FaceDetectBoundsView.ShowBoundsOnFace(faces,wRation,hRatio,this._owner._previewSize.Width, this._owner._previewSize.Height);
+
+            var b = 0;
         }
 
         //private void Process(CaptureResult result)
