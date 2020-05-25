@@ -83,7 +83,7 @@ namespace XFGetCameraData.Droid.CustomRenderers.Listeners
 
             detector.DetectInImage(imgForFirebase)
                 .AddOnSuccessListener(this._owner.DetectSuccessListener);
-            #endregion
+            #endregion         
         }
     }
 

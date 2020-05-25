@@ -83,7 +83,7 @@ namespace XFGetCameraData.Droid.Utility
         }
 
         //Rotate and bitmap
-        public static async Task<Android.Graphics.Bitmap> RotateAndBitmap(MemoryStream ms,int sensorOrientation)
+        public static async Task<Android.Graphics.Bitmap> RotateAndBitmap(MemoryStream ms, int sensorOrientation)
         {
             //Exifからjpegのカメラの向きを取得
             var rotationType = ImageUtility.GetJpegOrientation(ms);
@@ -108,7 +108,7 @@ namespace XFGetCameraData.Droid.Utility
             byte[] rotated;
             using (var ms2 = new MemoryStream())
             {
-                await bitmap.CompressAsync(CompressFormat.Png, 0, ms2);
+                await bitmap.CompressAsync(CompressFormat.Jpeg, 50, ms2);//quality:0~100?
                 rotated = ms2.ToArray();
             }
 
