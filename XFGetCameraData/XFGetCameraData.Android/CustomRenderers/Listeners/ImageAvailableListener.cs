@@ -1,18 +1,25 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 
 using Android.App;
 using Android.Content;
+using Android.Graphics;
 using Android.Media;
 using Android.OS;
 using Android.Runtime;
 using Android.Views;
 using Android.Widget;
+using Firebase.ML.Vision;
+using Firebase.ML.Vision.Common;
+using Firebase.ML.Vision.Face;
 using Java.Lang;
 using Java.Nio;
 using Java.Security;
+using XFGetCameraData.Droid.FirebaseML.Listeners;
+using XFGetCameraData.Droid.Utility;
 
 namespace XFGetCameraData.Droid.CustomRenderers.Listeners
 {
@@ -34,7 +41,7 @@ namespace XFGetCameraData.Droid.CustomRenderers.Listeners
         /// <summary>
         /// OnImageAvailableから呼び出される
         /// </summary>
-        private void ProcessOnImageAvailable()
+        private async void ProcessOnImageAvailable()
         {
             //this._owner.BackgroundHandler.Post(new ImageSaver(reader.AcquireNextImage()));
             var image = this._owner.ImageReader.AcquireNextImage();
@@ -55,7 +62,28 @@ namespace XFGetCameraData.Droid.CustomRenderers.Listeners
             if (this._owner.FrameCount % DroidCameraPreview2.UPDATE_FRAME_SPAN != 0)
                 return;
 
-            this._owner.JpegBytes = jpegBytes;
+            //bytes[]→回転+bitmap→byte[]
+            using (var ms = new MemoryStream(jpegBytes))
+            {
+                #region 画像回転
+                this._owner.AndroidBitmap_Rotated = await ImageUtility.RotateAndBitmap(ms, this._owner.SensorOrientation);
+                #endregion
+
+                #region byte[]へ
+                //AndroidBitmap→byte[]
+                this._owner.JpegBytes = await ImageUtility.AndroidBitmapToByteArray(this._owner.AndroidBitmap_Rotated);
+                #endregion
+            }
+
+            #region Firebase face detectを使った顔検出
+            var imgForFirebase = FirebaseVisionImage.FromBitmap(this._owner.AndroidBitmap_Rotated);
+            var options = new FirebaseVisionFaceDetectorOptions.Builder().Build();
+            var detector = FirebaseVision.GetInstance(this._owner.FirebaseApp)
+                .GetVisionFaceDetector(options);
+
+            detector.DetectInImage(imgForFirebase)
+                .AddOnSuccessListener(this._owner.DetectSuccessListener);
+            #endregion
         }
     }
 

@@ -61,8 +61,8 @@ namespace XFGetCameraData.Droid.CustomRenderers
             _droidCameraPreview2 = new DroidCameraPreview2(this._context);
 
             _droidCameraPreview2.FrameCountUpdated += _droidCameraPreview2_FrameCountUpdated;
-            //_droidCameraPreview2.AndroidBitmapUpdated += _droidCameraPreview2_AndroidBitmapUpdated;
-            _droidCameraPreview2.JpegBytesUpdated += _droidCameraPreview2_JpegBytesUpdated;
+            _droidCameraPreview2.AndroidBitmapUpdated += _droidCameraPreview2_AndroidBitmapUpdated;
+            //_droidCameraPreview2.JpegBytesUpdated += _droidCameraPreview2_JpegBytesUpdated;
             _droidCameraPreview2.SensorOrientationUpdated += _droidCameraPreview2_SensorOrientationUpdated;
 
             this.SetNativeControl(_droidCameraPreview2);
@@ -107,62 +107,28 @@ namespace XFGetCameraData.Droid.CustomRenderers
             this.SensorOrientation = s.SensorOrientation;
             _formsCameraPreview2.SensorOrientation = s.SensorOrientation;
         }
-        private async void _droidCameraPreview2_JpegBytesUpdated(object sender, EventArgs e)
+        private void _droidCameraPreview2_JpegBytesUpdated(object sender, EventArgs e)
         {
             var s = sender as DroidCameraPreview2;
             if (s is null)
                 return;
 
-            //s.Imageは画像が横のままなので,困る
-            //var imageSource = ImageSource.FromStream(() => new MemoryStream(s.Image));
-            //_formsCameraPreview2.Frame = imageSource;
-            //_formsCameraPreview2.OnFrameUpdated(EventArgs.Empty);
+            this.JpegBytes = s.JpegBytes;
 
-
-
-            //bytes[]→bitmap→
-            using (var ms = new MemoryStream(s.JpegBytes))
-            {
-                #region 画像回転
-                //Exifからjpegのカメラの向きを取得
-                var rotationType = ImageUtility.GetJpegOrientation(ms);
-
-                //GetJpegOrientationメソッド内で位置が進んでいるので,先頭に戻す
-                ms.Seek(0, SeekOrigin.Begin);
-                //Byte[]→AndroidのBitmapを生成
-                var bmp = await BitmapFactory.DecodeStreamAsync(ms);
-                //Matrixを使って回転させ
-                var matrix = new Matrix();
-                matrix.PostRotate(180 - this.SensorOrientation);
-                //回転したBitmapを生成し直す
-                var rotated = Android.Graphics.Bitmap.CreateBitmap(bmp, 0, 0, bmp.Width, bmp.Height, matrix, true);
-
-                #endregion
-
-                //AndroidBitmap→byte[]
-                byte[] rotatedBytes;
-                using (var ms2 = new MemoryStream())
-                {
-                    await rotated.CompressAsync(CompressFormat.Png, 0, ms2);
-                    rotatedBytes = ms2.ToArray();
-                }
-
-                this.JpegBytes = rotatedBytes;
-                _formsCameraPreview2.JpegBytes = s.JpegBytes;
-
-                //byte[] → ImageSource
-                var imgSource = ImageSource.FromStream(() => new MemoryStream(rotatedBytes));
-                this.ImageSource = ImageSource;
-                _formsCameraPreview2.ImageSource = imgSource;
-            }
+            #region byte[] → ImageSource
+            var imgSource = ImageSource.FromStream(() => new MemoryStream(this.JpegBytes));
+            this.ImageSource = ImageSource;
+            _formsCameraPreview2.ImageSource = imgSource;
+            #endregion
         }
+
         private async void _droidCameraPreview2_AndroidBitmapUpdated(object sender, EventArgs e)
         {
             var s = sender as DroidCameraPreview2;
             if (s is null)
                 return;
 
-            //Bitmap → ImageSource
+            #region Bitmap → ImageSource
 
             byte[] bitmapData;
             //pngのbyte[]に変換
@@ -175,7 +141,7 @@ namespace XFGetCameraData.Droid.CustomRenderers
             var imageSource = ImageSource.FromStream(() => new MemoryStream(bitmapData));
             this.ImageSource = imageSource;
             _formsCameraPreview2.ImageSource = imageSource;
-            //_formsCameraPreview2.OnImageSourceUpdated(EventArgs.Empty);
+            #endregion
         }
         private void _droidCameraPreview2_FrameCountUpdated(object sender, EventArgs e)
         {

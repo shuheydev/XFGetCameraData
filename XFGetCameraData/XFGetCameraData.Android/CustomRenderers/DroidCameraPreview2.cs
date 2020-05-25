@@ -13,10 +13,12 @@ using Android.Runtime;
 using Android.Util;
 using Android.Views;
 using Android.Widget;
+using Firebase;
 using Java.Lang;
 using XFGetCameraData.CustomRenderers;
 using XFGetCameraData.Droid.CustomRenderers;
 using XFGetCameraData.Droid.CustomRenderers.Listeners;
+using XFGetCameraData.Droid.FirebaseML.Listeners;
 using XFGetCameraData.Services;
 
 [assembly: Xamarin.Forms.Dependency(typeof(DroidCameraPreview2))]
@@ -60,7 +62,7 @@ namespace XFGetCameraData.Droid.CustomRenderers
 
         internal const string BACKGROUND_THREAD_TAG = "CameraBackground";
 
-        internal const long UPDATE_FRAME_SPAN = 4;//例:64フレーム毎にFrameやBitmapプロパティを更新する.
+        internal const long UPDATE_FRAME_SPAN = 32;//例:64フレーム毎にFrameやBitmapプロパティを更新する.
         internal static readonly SparseIntArray ORIENTATIONS = new SparseIntArray();
 
         #region Important
@@ -80,6 +82,7 @@ namespace XFGetCameraData.Droid.CustomRenderers
         internal CameraCaptureSessionListener CameraCaptureSessionListener { get; private set; }
         private CameraCaptureStillPictureSessionListener CameraCaptureStillPictureSessionListener { get; set; }
         private ImageAvailableListener ImageAvailableListener { get; set; }
+        public DetectSuccessListener DetectSuccessListener { get; private set; }
         private CameraSurfaceTextureListener _surfaceTextureListener { get; set; }
         private CameraDevice.StateCallback _cameraStateListener;
         #endregion
@@ -212,6 +215,8 @@ namespace XFGetCameraData.Droid.CustomRenderers
         internal CaptureRequest PreviewRequest { get; set; }
         internal CaptureRequest.Builder StillCaptureBuilder { get; set; }
         internal CaptureRequest StillCaptureRequest { get; set; }
+        public FirebaseApp FirebaseApp { get; set; }
+        public Bitmap AndroidBitmap_Rotated { get; internal set; }
         #endregion
 
 
@@ -243,12 +248,24 @@ namespace XFGetCameraData.Droid.CustomRenderers
             this.CameraCaptureSessionListener = new CameraCaptureSessionListener(this);
             this.CameraCaptureStillPictureSessionListener = new CameraCaptureStillPictureSessionListener(this);
             this.ImageAvailableListener = new ImageAvailableListener(this);
+            this.DetectSuccessListener = new DetectSuccessListener(this);
 
             #region リスナーの登録
             this._surfaceTextureListener = new CameraSurfaceTextureListener(this);
             CameraTexture.SurfaceTextureListener = this._surfaceTextureListener;
             #endregion
             #endregion
+
+            //MLKit用の初期化
+            //FirebaseAppを生成するには以下のようにする.
+            //クラウドの機能を使わず,ローカルだけでの顔検出なので,
+            //Firebaseでプロジェクトを作成する必要はない.
+            //ApplicationIdに適当な文字列を設定し,opsionを生成し,
+            //FirebaseApp.InitializeAppメソッドにわたす.
+            var options = new FirebaseOptions.Builder()
+                .SetApplicationId("testApp")
+                .Build();
+            this.FirebaseApp = FirebaseApp.InitializeApp(this._context, options);
         }
 
         private void StartBackgroundThread()

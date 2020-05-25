@@ -37,7 +37,7 @@
 
             <Image
                 x:Name="frameImage"
-                AbsoluteLayout.LayoutBounds="1,1,0.5,0.5"
+                AbsoluteLayout.LayoutBounds="1,1,0.8,0.8"
                 AbsoluteLayout.LayoutFlags="All"
                 Source="{Binding FrameImageSource}" />
         </AbsoluteLayout>

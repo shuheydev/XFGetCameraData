@@ -7,12 +7,18 @@ using Android.App;
 using Android.Content;
 using Android.Graphics;
 using Android.Hardware.Camera2;
+using Android.Media;
 using Android.OS;
 using Android.Runtime;
 using Android.Views;
 using Android.Widget;
+using Firebase;
+using Firebase.ML.Vision;
+using Firebase.ML.Vision.Common;
+using Firebase.ML.Vision.Face;
 using Java.Interop;
 using Java.Lang;
+using XFGetCameraData.Droid.FirebaseML.Listeners;
 
 namespace XFGetCameraData.Droid.CustomRenderers.Listeners
 {
@@ -65,12 +71,14 @@ namespace XFGetCameraData.Droid.CustomRenderers.Listeners
             if (this._owner.FrameCount % DroidCameraPreview2.UPDATE_FRAME_SPAN != 0)
                 return;
 
-            //Frame毎に更新される
-            //https://stackoverflow.com/questions/29413431/how-to-get-single-preview-frame-in-camera2-api-android-5-0
-            var bitmap = Android.Graphics.Bitmap.CreateBitmap(this._owner.CameraTexture.Width, this._owner.CameraTexture.Height, Android.Graphics.Bitmap.Config.Argb8888);//previewSizeは大きすぎる.カメラの解像度になる
-            this._owner.CameraTexture.GetBitmap(bitmap);
+            #region TextureViewからBitmapを取得したい場合は有効にする
+            ////Frame毎に更新される
+            ////https://stackoverflow.com/questions/29413431/how-to-get-single-preview-frame-in-camera2-api-android-5-0
+            //var bitmap = Android.Graphics.Bitmap.CreateBitmap(this._owner.CameraTexture.Width, this._owner.CameraTexture.Height, Android.Graphics.Bitmap.Config.Argb8888);//previewSizeは大きすぎる.カメラの解像度になる
+            //this._owner.CameraTexture.GetBitmap(bitmap);
 
-            this._owner.AndroidBitmap = bitmap;
+            //this._owner.AndroidBitmap = bitmap;
+            #endregion
         }
     }
 }
