@@ -47,21 +47,23 @@ namespace XFGetCameraData.Droid.CustomRenderers
                 _paint.AntiAlias = true;
                 _paint.SetStyle(Paint.Style.Stroke);
 
-                //プレビュー表示レイヤーに対して,枠線の座標データは横向きのデータなので
-                //座標の基準点をずらして90°回転させるなどしている.
-                canvas.Translate((float)(_previewImageHeight * _heightRatio), 0);
-                canvas.Rotate(90);
-
                 foreach (var face in _faces)
                 {
                     Rect rect = null;
                     //FrontとBackのカメラでは画像の向きが異なるので,
                     //それに合わせて調整している
                     //難しい...
-                    if (_sensorOrientation == 90)
-                        rect = new Rect((int)((face.Bounds.Left) * _widthRatio), (int)(face.Bounds.Top * _heightRatio), (int)(face.Bounds.Right * _widthRatio), (int)(face.Bounds.Bottom * _heightRatio));
-                    else if (_sensorOrientation == 270)
-                        rect = new Rect((int)((_previewImageWidth - face.Bounds.Left) * _widthRatio), (int)((face.Bounds.Top) * _heightRatio), (int)((_previewImageWidth - face.Bounds.Right) * _widthRatio), (int)((face.Bounds.Bottom) * _heightRatio));
+                    //参考:https://qiita.com/ohwada/items/94105a7ea134ab4d2734
+                    if (_sensorOrientation == 90)//Backカメラ
+                        rect = new Rect((int)((_previewImageHeight - face.Bounds.Top) * _heightRatio),
+                                        (int)(face.Bounds.Left * _widthRatio),
+                                        (int)((_previewImageHeight - face.Bounds.Bottom) * _heightRatio),
+                                        (int)(face.Bounds.Right * _widthRatio));
+                    else if (_sensorOrientation == 270)//フロントカメラ
+                        rect = new Rect((int)((_previewImageHeight - face.Bounds.Top) * _heightRatio),
+                                        (int)((_previewImageWidth - face.Bounds.Left) * _widthRatio),
+                                        (int)((_previewImageHeight - face.Bounds.Bottom) * _heightRatio),
+                                        (int)((_previewImageWidth - face.Bounds.Right) * _widthRatio));
 
                     canvas.DrawRect(rect, _paint);
                 }
