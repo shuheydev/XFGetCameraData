@@ -35,28 +35,33 @@ namespace XFGetCameraData.Droid.CustomRenderers
             _paint = new Paint();
         }
 
-        private bool rotated = false;
         protected override void OnDraw(Canvas canvas)
         {
             base.OnDraw(canvas);
-            this._canvas = canvas;
+
             if (this._faces != null)
             {
+                //顔を囲む枠線の設定
                 _paint.Color = Color.Argb(255, 255, 0, 255);
                 _paint.StrokeWidth = 3;
                 _paint.AntiAlias = true;
                 _paint.SetStyle(Paint.Style.Stroke);
 
-                canvas.Translate((float)(_y * _wRatio), 0);
+                //プレビュー表示レイヤーに対して,枠線の座標データは横向きのデータなので
+                //座標の基準点をずらして90°回転させるなどしている.
+                canvas.Translate((float)(_previewImageHeight * _heightRatio), 0);
                 canvas.Rotate(90);
 
-                foreach (var face in this._faces)
+                foreach (var face in _faces)
                 {
                     Rect rect = null;
+                    //FrontとBackのカメラでは画像の向きが異なるので,
+                    //それに合わせて調整している
+                    //難しい...
                     if (_sensorOrientation == 90)
-                        rect = new Rect((int)((face.Bounds.Left) * _hRatio), (int)(face.Bounds.Top * _wRatio), (int)(face.Bounds.Right * _hRatio), (int)(face.Bounds.Bottom * _wRatio));
-                    else if(_sensorOrientation==270)
-                        rect = new Rect((int)((_x-face.Bounds.Left) * _hRatio), (int)((face.Bounds.Top) * _wRatio), (int)((_x-face.Bounds.Right) * _hRatio), (int)((face.Bounds.Bottom) * _wRatio));
+                        rect = new Rect((int)((face.Bounds.Left) * _widthRatio), (int)(face.Bounds.Top * _heightRatio), (int)(face.Bounds.Right * _widthRatio), (int)(face.Bounds.Bottom * _heightRatio));
+                    else if (_sensorOrientation == 270)
+                        rect = new Rect((int)((_previewImageWidth - face.Bounds.Left) * _widthRatio), (int)((face.Bounds.Top) * _heightRatio), (int)((_previewImageWidth - face.Bounds.Right) * _widthRatio), (int)((face.Bounds.Bottom) * _heightRatio));
 
                     canvas.DrawRect(rect, _paint);
                 }
@@ -69,34 +74,28 @@ namespace XFGetCameraData.Droid.CustomRenderers
 
         private Android.Hardware.Camera2.Params.Face[] _faces;
 
-        internal void ClearBounds()
-        {
-            //_canvas.DrawColor(Color.Transparent, PorterDuff.Mode.Clear);
-            Invalidate();
-        }
-
-        private double _wRatio;
-        private double _hRatio;
-        private int _y;
-
-
-        private int _x;
+        private double _heightRatio;
+        private double _widthRatio;
+        private int _previewImageHeight;
+        private int _previewImageWidth;
         private int _sensorOrientation;
-        private Canvas _canvas;
 
         public void ShowBoundsOnFace(Android.Hardware.Camera2.Params.Face[] faces,
-                                     double wRatio,
-                                     double hRatio,
-                                     int x,
-                                     int y,
+                                     int textureWidth,
+                                     int textureHeight,
+                                     int previewImageWidth,
+                                     int previewImageHeight,
                                      int sensorOrientation)
         {
-            this._faces = faces;
-            this._wRatio = wRatio;
-            this._hRatio = hRatio;
-            this._y = y;
-            this._x = x;
-            this._sensorOrientation = sensorOrientation;
+            _faces = faces;
+            _previewImageHeight = previewImageHeight;
+            _previewImageWidth = previewImageWidth;
+            _sensorOrientation = sensorOrientation;
+
+            //プレビューの画像は横になっているのでWidthとHeightを入れ替えて計算している
+            _widthRatio = (double)textureHeight / previewImageWidth;
+            _heightRatio = (double)textureWidth / previewImageHeight;
+
             Invalidate();//←再描画?
         }
     }

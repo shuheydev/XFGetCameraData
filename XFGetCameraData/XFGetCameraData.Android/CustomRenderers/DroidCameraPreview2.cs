@@ -77,7 +77,7 @@ namespace XFGetCameraData.Droid.CustomRenderers
         private string _cameraId;
         private CameraManager _cameraManager;
 
-        public Android.Util.Size _previewSize { get; internal set; }
+        public Android.Util.Size PreviewSize { get; internal set; }
         #endregion
 
         #region Listener
@@ -320,7 +320,7 @@ namespace XFGetCameraData.Droid.CustomRenderers
                 return false;
             });
             Android.Hardware.Camera2.Params.StreamConfigurationMap scm = (Android.Hardware.Camera2.Params.StreamConfigurationMap)cameraCharacteristics.Get(CameraCharacteristics.ScalerStreamConfigurationMap);
-            this._previewSize = scm.GetOutputSizes((int)ImageFormatType.Jpeg)[0];
+            this.PreviewSize = scm.GetOutputSizes((int)ImageFormatType.Jpeg)[0];
 
             this.SensorOrientation = (int)cameraCharacteristics.Get(CameraCharacteristics.SensorOrientation);//Back:4032*3024,Front:3264*2448
 
@@ -354,9 +354,9 @@ namespace XFGetCameraData.Droid.CustomRenderers
                     throw new IllegalStateException("SurfaceTexture is null");
                 }
 
-                this.SurfaceTexture.SetDefaultBufferSize(_previewSize.Width, _previewSize.Height);
+                this.SurfaceTexture.SetDefaultBufferSize(PreviewSize.Width, PreviewSize.Height);
 
-                //プレビュー用
+                //プレビュー用のRequestBuilderを作成
                 this.PreviewRequestBuilder = this.CameraDevice.CreateCaptureRequest(CameraTemplate.Preview);
                 Surface previewSurface = new Surface(this.SurfaceTexture);
                 PreviewRequestBuilder.AddTarget(previewSurface);
