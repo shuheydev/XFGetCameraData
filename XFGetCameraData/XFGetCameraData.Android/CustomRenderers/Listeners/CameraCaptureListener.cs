@@ -52,7 +52,7 @@ namespace XFGetCameraData.Droid.CustomRenderers.Listeners
 
             //Face[]の取得方法
             //https://forums.xamarin.com/discussion/95912/xamarin-studio-android-face-detection-with-camera2
-            var f = this._owner.CaptureResult?.Get(CaptureResult.StatisticsFaces);
+            var f = this._owner.CaptureResult?.Get(CaptureResult.StatisticsFaces);//Java.Lang.Objectが返ってくるので↓で変換する
             Android.Hardware.Camera2.Params.Face[] faces = f.ToArray<Android.Hardware.Camera2.Params.Face>();
 
             if (faces.Length <= 0)
