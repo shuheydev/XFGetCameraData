@@ -35,11 +35,16 @@ namespace XFGetCameraData.Droid.CustomRenderers
             _paint = new Paint();
         }
 
+        /// <summary>
+        /// ShowBoundsOnFace内のInvalidateで呼び出される.
+        /// </summary>
+        /// <param name="canvas"></param>
         protected override void OnDraw(Canvas canvas)
         {
             base.OnDraw(canvas);
 
-            if (this._faces != null)
+
+            if (this._faces?.Length > 0)
             {
                 //顔を囲む枠線の設定
                 _paint.Color = Color.Argb(255, 255, 0, 255);
