@@ -263,7 +263,7 @@ namespace XFGetCameraData.Droid.CustomRenderers
             RequestLayout();
 
             //フレーム処理用バッファの作成
-            int size = previewSize.Width * previewSize.Height * Android.Graphics.ImageFormat.GetBitsPerPixel(Android.Graphics.ImageFormat.Nv21) / 8;
+            int size = previewSize.Width * previewSize.Height * Android.Graphics.ImageFormat.GetBitsPerPixel(Android.Graphics.ImageFormatType.Nv21) / 8;
             Buff = new byte[size];
             //フレーム処理用のコールバック生成
             PreviewCallback = new CameraPreviewCallback { CameraPreview = FormsCameraPreview, Buff = Buff };

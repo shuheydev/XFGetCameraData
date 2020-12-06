@@ -48,18 +48,21 @@ namespace XFGetCameraData.Droid.CustomRenderers.Listeners
         {
             try
             {
-                //オートフォーカスの設定
+                //Preview用のオートフォーカスなどカメラの設定
                 //https://qiita.com/ohwada/items/d33cd9c90abf3ec01f9e
-                this._owner.PreviewRequestBuilder.Set(CaptureRequest.ControlAfMode,
-                                                      (int)ControlAFMode.ContinuousPicture);
+                this._owner.PreviewRequestBuilder.Set(CaptureRequest.ControlMode, (int)ControlMode.Auto);
+                this._owner.PreviewRequestBuilder.Set(CaptureRequest.ControlAfMode,(int)ControlAFMode.ContinuousPicture);
+                //顔検出機能を有効にする.
+                this._owner.PreviewRequestBuilder.Set(CaptureRequest.StatisticsFaceDetectMode, (int)StatisticsFaceDetectMode.Simple);
 
+                //撮影用のカメラの設定
                 //this._owner.StillCaptureBuilder.Set(CaptureRequest.ControlAfTrigger, (int)ControlAFTrigger.Start);
                 //this._owner.StillCaptureBuilder.Set(CaptureRequest.ControlAfMode, (int)ControlAFMode.ContinuousPicture);
                 //var orientation = (DroidCameraPreview2.ORIENTATIONS.Get(1) + this._owner.SensorOrientation + 270) % 360;
                 //this._owner.StillCaptureBuilder.Set(CaptureRequest.JpegOrientation, orientation);
 
-                //ここでやっとプレビューが表示される.
                 this._owner.PreviewRequest = this._owner.PreviewRequestBuilder.Build();
+                //ここでやっとプレビューが表示される.
                 this._owner.CaptureSession.SetRepeatingRequest(this._owner.PreviewRequest,
                                                                this._owner.CameraCaptureSessionListener,
                                                                this._owner.BackgroundHandler);

@@ -1,4 +1,7 @@
-﻿using Android.Hardware.Camera2;
+﻿using Android.Gms.Vision.Faces;
+using Android.Hardware.Camera2;
+using Android.Hardware.Camera2.Params;
+using Android.Runtime;
 using Java.Lang;
 using System;
 
@@ -27,16 +30,6 @@ namespace XFGetCameraData.Droid.CustomRenderers.Listeners
 
             this._owner.CaptureResult = result;
 
-            //Process(result);
-            //OnCaptureCompleted(EventArgs.Empty);
-
-            ////Still撮影をする場合はこれを追加する.
-            ////Captureメソッド実行でキャプチャされる
-            //this._owner.StillCaptureRequest = this._owner.StillCaptureBuilder.Build();
-            //this._owner.CaptureSession.Capture(this._owner.StillCaptureRequest,
-            //                                   this._owner.CameraCaptureStillPictureSessionListener,
-            //                                   this._owner.BackgroundHandler);
-
             this.ProcessOnCapture();
         }
         public override void OnCaptureProgressed(CameraCaptureSession session, CaptureRequest request, CaptureResult partialResult)
@@ -56,6 +49,21 @@ namespace XFGetCameraData.Droid.CustomRenderers.Listeners
         private void ProcessOnCapture()
         {
             this._owner.FrameCount = this._owner.CaptureResult.FrameNumber;
+
+            //Face[]の取得方法
+            //https://forums.xamarin.com/discussion/95912/xamarin-studio-android-face-detection-with-camera2
+            var f = this._owner.CaptureResult?.Get(CaptureResult.StatisticsFaces);//Java.Lang.Objectが返ってくるので↓で変換する
+            Android.Hardware.Camera2.Params.Face[] faces = f.ToArray<Android.Hardware.Camera2.Params.Face>();
+
+            if (faces.Length <= 0)
+                return;
+
+            this._owner.FaceDetectBoundsView.ShowBoundsOnFace(faces,
+                                                              this._owner.CameraTexture.Width,
+                                                              this._owner.CameraTexture.Height,
+                                                              this._owner.PreviewSize.Width,
+                                                              this._owner.PreviewSize.Height,
+                                                              this._owner.SensorOrientation);
         }
 
         //private void Process(CaptureResult result)

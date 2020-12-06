@@ -19,8 +19,8 @@
                 IsPreviewing="true" />-->
             <my:CameraPreview2
                 x:Name="CameraPreview2"
-                AbsoluteLayout.LayoutBounds="0,0,480,640"
-                AbsoluteLayout.LayoutFlags="PositionProportional"
+                AbsoluteLayout.LayoutBounds="0,0,1,1"
+                AbsoluteLayout.LayoutFlags="All"
                 Camera="Back"
                 ImageSourceUpdated="CameraPreview2_ImageSourceUpdated"
                 IsPreviewing="true"
@@ -37,7 +37,7 @@
 
             <Image
                 x:Name="frameImage"
-                AbsoluteLayout.LayoutBounds="1,1,0.5,0.5"
+                AbsoluteLayout.LayoutBounds="1,1,0.8,0.8"
                 AbsoluteLayout.LayoutFlags="All"
                 Source="{Binding FrameImageSource}" />
         </AbsoluteLayout>

@@ -13,10 +13,12 @@ using Android.Runtime;
 using Android.Util;
 using Android.Views;
 using Android.Widget;
+using Firebase;
 using Java.Lang;
 using XFGetCameraData.CustomRenderers;
 using XFGetCameraData.Droid.CustomRenderers;
 using XFGetCameraData.Droid.CustomRenderers.Listeners;
+using XFGetCameraData.Droid.FirebaseML.Listeners;
 using XFGetCameraData.Services;
 
 [assembly: Xamarin.Forms.Dependency(typeof(DroidCameraPreview2))]
@@ -60,12 +62,14 @@ namespace XFGetCameraData.Droid.CustomRenderers
 
         internal const string BACKGROUND_THREAD_TAG = "CameraBackground";
 
-        internal const long UPDATE_FRAME_SPAN = 4;//例:64フレーム毎にFrameやBitmapプロパティを更新する.
+        internal const long UPDATE_FRAME_SPAN = 32;//例:64フレーム毎にFrameやBitmapプロパティを更新する.
         internal static readonly SparseIntArray ORIENTATIONS = new SparseIntArray();
 
         #region Important
         private readonly Context _context;
         internal TextureView CameraTexture;
+
+        public MyView FaceDetectBoundsView { get; private set; }
 
         private HandlerThread _backgroundThread;
         internal Handler BackgroundHandler { get; set; }
@@ -73,13 +77,14 @@ namespace XFGetCameraData.Droid.CustomRenderers
         private string _cameraId;
         private CameraManager _cameraManager;
 
-        private Android.Util.Size _previewSize;
+        public Android.Util.Size PreviewSize { get; internal set; }
         #endregion
 
         #region Listener
         internal CameraCaptureSessionListener CameraCaptureSessionListener { get; private set; }
         private CameraCaptureStillPictureSessionListener CameraCaptureStillPictureSessionListener { get; set; }
         private ImageAvailableListener ImageAvailableListener { get; set; }
+        public DetectSuccessListener DetectSuccessListener { get; private set; }
         private CameraSurfaceTextureListener _surfaceTextureListener { get; set; }
         private CameraDevice.StateCallback _cameraStateListener;
         #endregion
@@ -212,6 +217,8 @@ namespace XFGetCameraData.Droid.CustomRenderers
         internal CaptureRequest PreviewRequest { get; set; }
         internal CaptureRequest.Builder StillCaptureBuilder { get; set; }
         internal CaptureRequest StillCaptureRequest { get; set; }
+        public FirebaseApp FirebaseApp { get; set; }
+        public Bitmap AndroidBitmap_Rotated { get; internal set; }
         #endregion
 
 
@@ -239,16 +246,30 @@ namespace XFGetCameraData.Droid.CustomRenderers
             var view = inflater.Inflate(Resource.Layout.CameraLayout, this);
             CameraTexture = view.FindViewById<TextureView>(Resource.Id.cameraTexture);
 
+            this.FaceDetectBoundsView = view.FindViewById<MyView>(Resource.Id.faceDetectBounds);
+
             //リスナーの作成
             this.CameraCaptureSessionListener = new CameraCaptureSessionListener(this);
             this.CameraCaptureStillPictureSessionListener = new CameraCaptureStillPictureSessionListener(this);
             this.ImageAvailableListener = new ImageAvailableListener(this);
+            this.DetectSuccessListener = new DetectSuccessListener(this);
 
             #region リスナーの登録
             this._surfaceTextureListener = new CameraSurfaceTextureListener(this);
             CameraTexture.SurfaceTextureListener = this._surfaceTextureListener;
             #endregion
             #endregion
+
+            //MLKit用の初期化
+            //FirebaseAppを生成するには以下のようにする.
+            //クラウドの機能を使わず,ローカルだけでの顔検出なので,
+            //Firebaseでプロジェクトを作成する必要はない.
+            //ApplicationIdに適当な文字列を設定し,opsionを生成し,
+            //FirebaseApp.InitializeAppメソッドにわたす.
+            var options = new FirebaseOptions.Builder()
+                .SetApplicationId("testApp")
+                .Build();
+            this.FirebaseApp = FirebaseApp.InitializeApp(this._context, options);
         }
 
         private void StartBackgroundThread()
@@ -299,9 +320,9 @@ namespace XFGetCameraData.Droid.CustomRenderers
                 return false;
             });
             Android.Hardware.Camera2.Params.StreamConfigurationMap scm = (Android.Hardware.Camera2.Params.StreamConfigurationMap)cameraCharacteristics.Get(CameraCharacteristics.ScalerStreamConfigurationMap);
-            this._previewSize = scm.GetOutputSizes((int)ImageFormatType.Jpeg)[0];
+            this.PreviewSize = scm.GetOutputSizes((int)ImageFormatType.Jpeg)[0];
 
-            this.SensorOrientation = (int)cameraCharacteristics.Get(CameraCharacteristics.SensorOrientation);
+            this.SensorOrientation = (int)cameraCharacteristics.Get(CameraCharacteristics.SensorOrientation);//Back:4032*3024,Front:3264*2448
 
             //ImageReaderの設定
             this.ImageReader = ImageReader.NewInstance(480, 640, ImageFormatType.Jpeg, 1);
@@ -333,9 +354,9 @@ namespace XFGetCameraData.Droid.CustomRenderers
                     throw new IllegalStateException("SurfaceTexture is null");
                 }
 
-                this.SurfaceTexture.SetDefaultBufferSize(_previewSize.Width, _previewSize.Height);
+                this.SurfaceTexture.SetDefaultBufferSize(PreviewSize.Width, PreviewSize.Height);
 
-                //プレビュー用
+                //プレビュー用のRequestBuilderを作成
                 this.PreviewRequestBuilder = this.CameraDevice.CreateCaptureRequest(CameraTemplate.Preview);
                 Surface previewSurface = new Surface(this.SurfaceTexture);
                 PreviewRequestBuilder.AddTarget(previewSurface);
