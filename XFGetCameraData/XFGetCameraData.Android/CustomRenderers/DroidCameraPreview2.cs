@@ -124,6 +124,7 @@ namespace XFGetCameraData.Droid.CustomRenderers
             {
                 _cameraOption = value;
 
+                StopCamera();
                 StartCamera();
             }
         }
@@ -329,6 +330,7 @@ namespace XFGetCameraData.Droid.CustomRenderers
             this.ImageReader.SetOnImageAvailableListener(this.ImageAvailableListener, this.BackgroundHandler);
 
             this._cameraStateListener = new CameraStateListener(this);
+
             _cameraManager.OpenCamera(_cameraId, this._cameraStateListener, null);
         }
         public void StopCamera()

@@ -21,7 +21,7 @@
                 x:Name="CameraPreview2"
                 AbsoluteLayout.LayoutBounds="0,0,1,1"
                 AbsoluteLayout.LayoutFlags="All"
-                Camera="Back"
+                Camera="Front"
                 ImageSourceUpdated="CameraPreview2_ImageSourceUpdated"
                 IsPreviewing="true"
                 JpegBytesUpdated="CameraPreview2_JpegBytesUpdated"
