@@ -69,7 +69,7 @@ namespace XFGetCameraData.Droid.CustomRenderers
         private readonly Context _context;
         internal TextureView CameraTexture;
 
-        public MyView FaceDetectBoundsView { get; private set; }
+        public FaceBoundsView FaceDetectBoundsView { get; private set; }
 
         private HandlerThread _backgroundThread;
         internal Handler BackgroundHandler { get; set; }
@@ -247,7 +247,7 @@ namespace XFGetCameraData.Droid.CustomRenderers
             var view = inflater.Inflate(Resource.Layout.CameraLayout, this);
             CameraTexture = view.FindViewById<TextureView>(Resource.Id.cameraTexture);
 
-            this.FaceDetectBoundsView = view.FindViewById<MyView>(Resource.Id.faceDetectBounds);
+            this.FaceDetectBoundsView = view.FindViewById<FaceBoundsView>(Resource.Id.faceDetectBounds);
 
             //リスナーの作成
             this.CameraCaptureSessionListener = new CameraCaptureSessionListener(this);

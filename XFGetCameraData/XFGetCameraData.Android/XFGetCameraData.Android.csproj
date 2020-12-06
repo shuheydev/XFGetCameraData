@@ -81,7 +81,7 @@
     <Compile Include="CustomRenderers\Listeners\CameraStateListener.cs" />
     <Compile Include="CustomRenderers\Listeners\CameraSurfaceTextureListener.cs" />
     <Compile Include="CustomRenderers\Listeners\ImageAvailableListener.cs" />
-    <Compile Include="CustomRenderers\MyView.cs" />
+    <Compile Include="CustomRenderers\FaceBoundsView.cs" />
     <Compile Include="FirebaseML\Listeners\DetectSuccessListener.cs" />
     <Compile Include="MainActivity.cs" />
     <Compile Include="Resources\Resource.designer.cs" />

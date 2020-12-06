@@ -15,15 +15,15 @@ using Android.Widget;
 namespace XFGetCameraData.Droid.CustomRenderers
 {
     //http://spiratesta.hatenablog.com/entry/20111020/1319094221
-    public class MyView : View
+    public class FaceBoundsView : View
     {
-        public MyView(Context context, IAttributeSet attrs) :
+        public FaceBoundsView(Context context, IAttributeSet attrs) :
             base(context, attrs)
         {
             Initialize();
         }
 
-        public MyView(Context context, IAttributeSet attrs, int defStyle) :
+        public FaceBoundsView(Context context, IAttributeSet attrs, int defStyle) :
             base(context, attrs, defStyle)
         {
             Initialize();
