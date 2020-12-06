@@ -55,8 +55,8 @@ namespace XFGetCameraData.Droid.CustomRenderers.Listeners
             var f = this._owner.CaptureResult?.Get(CaptureResult.StatisticsFaces);//Java.Lang.Objectが返ってくるので↓で変換する
             Android.Hardware.Camera2.Params.Face[] faces = f.ToArray<Android.Hardware.Camera2.Params.Face>();
 
-            if (faces.Length <= 0)
-                return;
+            //if (faces.Length <= 0)
+            //    return;
 
             this._owner.FaceDetectBoundsView.ShowBoundsOnFace(faces,
                                                               this._owner.CameraTexture.Width,

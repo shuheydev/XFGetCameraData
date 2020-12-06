@@ -33,7 +33,7 @@ namespace XFGetCameraData.Droid.CustomRenderers.Listeners
         }
         public override void OnDisconnected(CameraDevice cameraDevice)
         {
-            this._owner.CameraDevice.Close();
+            this._owner.CameraDevice?.Close();
             this._owner.CameraDevice = null;
         }
         public override void OnError(CameraDevice cameraDevice, [GeneratedEnum] CameraError error)

@@ -31,7 +31,7 @@ namespace XFGetCameraData.CustomRenderers
             propertyName: "Camera",
             returnType: typeof(CameraOption),
             declaringType: typeof(CameraPreview2),
-            defaultValue: CameraOption.Back);
+            defaultValue: CameraOption.Front);
         public CameraOption Camera
         {
             get { return (CameraOption)GetValue(CameraProperty); }

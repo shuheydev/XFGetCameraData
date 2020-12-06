@@ -15,37 +15,52 @@ using Android.Widget;
 namespace XFGetCameraData.Droid.CustomRenderers
 {
     //http://spiratesta.hatenablog.com/entry/20111020/1319094221
-    public class MyView : View
+    public class FaceBoundsView : View
     {
-        public MyView(Context context, IAttributeSet attrs) :
+        public FaceBoundsView(Context context, IAttributeSet attrs) :
             base(context, attrs)
         {
             Initialize();
         }
 
-        public MyView(Context context, IAttributeSet attrs, int defStyle) :
+        public FaceBoundsView(Context context, IAttributeSet attrs, int defStyle) :
             base(context, attrs, defStyle)
         {
             Initialize();
         }
 
-        private Paint _paint;
+        private Paint _paintRect;
+        private Paint _paintText;
+
         private void Initialize()
         {
-            _paint = new Paint();
+            _paintRect = new Paint();
+            _paintText = new Paint();
         }
 
+        /// <summary>
+        /// ShowBoundsOnFace内のInvalidateで呼び出される.
+        /// </summary>
+        /// <param name="canvas"></param>
         protected override void OnDraw(Canvas canvas)
         {
             base.OnDraw(canvas);
 
-            if (this._faces != null)
+
+            if (this._faces?.Length > 0)
             {
                 //顔を囲む枠線の設定
-                _paint.Color = Color.Argb(255, 255, 0, 255);
-                _paint.StrokeWidth = 3;
-                _paint.AntiAlias = true;
-                _paint.SetStyle(Paint.Style.Stroke);
+                _paintRect.Color = Color.Argb(255, 255, 0, 255);
+                _paintRect.StrokeWidth = 3;
+                _paintRect.AntiAlias = true;
+                _paintRect.SetStyle(Paint.Style.Stroke);
+
+                //テキスト
+                _paintText.Color = Color.Argb(255, 255, 0, 255);
+                _paintText.StrokeWidth = 3;
+                _paintText.AntiAlias = true;
+                _paintText.TextSize = 50;
+                _paintText.SetStyle(Paint.Style.FillAndStroke);
 
                 foreach (var face in _faces)
                 {
@@ -65,7 +80,10 @@ namespace XFGetCameraData.Droid.CustomRenderers
                                         (int)((_previewImageHeight - face.Bounds.Bottom) * _heightRatio),
                                         (int)((_previewImageWidth - face.Bounds.Right) * _widthRatio));
 
-                    canvas.DrawRect(rect, _paint);
+                    canvas.DrawRect(rect, _paintRect);
+
+                    //テキストも描画したいな.
+                    canvas.DrawText("hello", rect.Right, rect.Bottom, _paintText);
                 }
             }
             else
