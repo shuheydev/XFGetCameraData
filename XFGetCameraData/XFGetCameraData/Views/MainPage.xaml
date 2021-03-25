@@ -56,8 +56,8 @@
                 VerticalOptions="CenterAndExpand" />-->
             <!--<Image BindingContext="{x:Reference CameraPreview2}" Source="{Binding Frame}" />-->
 
-            <Button Clicked="Button_Clicked_1" Text="Preview On/Off" />
-            <Button Clicked="Button_Clicked_2" Text="Camera Back/Front" />
+            <Button Clicked="PreviewOnOffButton_Clicked" Text="Preview On/Off" />
+            <Button Clicked="ChangeCmaeraFrontBackButton_Clicked" Text="Camera Back/Front" />
         </StackLayout>
 
     </StackLayout>

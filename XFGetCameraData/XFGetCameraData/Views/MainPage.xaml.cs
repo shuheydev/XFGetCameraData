@@ -1,10 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.ComponentModel;
 using System.Drawing;
 using System.IO;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using Xamarin.Essentials;
 using Xamarin.Forms;
@@ -25,6 +22,13 @@ namespace XFGetCameraData.Views
             this.BindingContext = this;
         }
 
+        protected override async void OnAppearing()
+        {
+            base.OnAppearing();
+
+            await GetCameraPermission();
+        }
+
         private void OnPictureFinished()
         {
             throw new NotImplementedException();
@@ -35,6 +39,7 @@ namespace XFGetCameraData.Views
             await Navigation.PushAsync(new ContentPage { Title = "空のページ" });
         }
 
+        
         async Task<PermissionStatus> GetCameraPermission()
         {
             var status = await Permissions.CheckStatusAsync<Permissions.Camera>();
