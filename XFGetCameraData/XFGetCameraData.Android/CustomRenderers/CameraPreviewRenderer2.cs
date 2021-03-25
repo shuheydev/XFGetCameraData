@@ -16,7 +16,7 @@ using Android.Hardware.Camera2;
 using Android.Media;
 using Android.OS;
 using Android.Runtime;
-using Android.Support.V7.Widget;
+//using Android.Support.V7.Widget;
 using Android.Util;
 using Android.Views;
 using Android.Widget;
